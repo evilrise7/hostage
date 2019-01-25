@@ -77,16 +77,16 @@ class Menu:
 
     def run(self):
         self.running = True
-        start_game = menu_text.render("Start Game", 0, (255, 255, 255))
+        start_game = menu_text.render("Start Game", 0, (100, 100, 100))
         start_game_rect = start_game.get_rect().move(80, 150)
 
-        record_txt = menu_text.render("Scores", 0, (255, 255, 255))
+        record_txt = menu_text.render("Scores", 0, (100, 100, 100))
         record_rect = record_txt.get_rect().move(80, 200)
 
-        settings_txt = menu_text.render("Settings", 0, (255, 255, 255))
+        settings_txt = menu_text.render("Settings", 0, (100, 100, 100))
         settings_rect = settings_txt.get_rect().move(80, 250)
 
-        exit_txt = menu_text.render("Quit", 0, (255, 255, 255))
+        exit_txt = menu_text.render("Quit", 0, (100, 100, 100))
         exit_rect = exit_txt.get_rect().move(80, 300)
 
         while self.running:
@@ -96,6 +96,26 @@ class Menu:
 
                 if event.type == pg.K_ESCAPE:
                     self.running = False
+                if event.type == pg.MOUSEMOTION:
+                    if start_game_rect.collidepoint(event.pos):
+                        start_game = menu_text.render("Start Game", 0, (255, 255, 255))
+                    else:
+                        start_game = menu_text.render("Start Game", 0, (100, 100, 100))
+
+                    if record_rect.collidepoint(event.pos):
+                        record_txt = menu_text.render("Scores", 0, (255, 255, 255))
+                    else:
+                        record_txt = menu_text.render("Scores", 0, (100, 100, 100))
+
+                    if settings_rect.collidepoint(event.pos):
+                        settings_txt = menu_text.render("Settings", 0, (255, 255, 255))
+                    else:
+                        settings_txt = menu_text.render("Settings", 0, (100, 100, 100))
+
+                    if exit_rect.collidepoint(event.pos):
+                        exit_txt = menu_text.render("Quit", 0, (255, 255, 255))
+                    else:
+                        exit_txt = menu_text.render("Quit", 0, (100, 100, 100))
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if start_game_rect.collidepoint(event.pos):
@@ -169,7 +189,7 @@ class Start_Menu:
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
-                    self.quit()
+                    quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
@@ -178,8 +198,7 @@ class Start_Menu:
 
                     if event.key == pg.K_SPACE:
                         if self.difficult != "" and self.gender != "":
-                            world = Game(difficult=self.difficult, boyorgirl=self.gender)
-                            world.run()
+                            Game(difficult=self.difficult, boyorgirl=self.gender).run()
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if martin_rect.collidepoint(event.pos):
@@ -242,14 +261,12 @@ class Start_Menu:
             pg.display.flip()
         open_Menu()
 
-    def quit(self):
-        pg.quit()
-        sys.exit()
-
 
 class Game:  # Инициализация игры
     def __init__(self, difficult="easy", boyorgirl="male"):
-        pg.mouse.set_visible(False)
+        self.clear_tiles()
+
+        self.pause = False
         self.dt = 0
         self.FPS = 60
         self.clock = pg.time.Clock()
@@ -261,6 +278,7 @@ class Game:  # Инициализация игры
 
         self.world = TileMap()
         self.inventory = Inventory()
+
         posx = 0
         posy = 0
 
@@ -296,6 +314,14 @@ class Game:  # Инициализация игры
             self.cell_timer = 7.5
         if self.difficult == "hardcore":
             self.cell_timer = 3.75
+
+    def clear_tiles(self):
+        entities_group.empty()
+        tiles_group.empty()
+        all_sprites.empty()
+        animal_group.empty()
+        drop_group.empty()
+        inventory_group.empty()
 
     def player_run(self):
         self.player.state = "run"
@@ -347,23 +373,45 @@ class Game:  # Инициализация игры
 
             self.world.render()
 
-            for i in range(len(self.mobs)):
-                # Если животное касается границ, то оно погибает
-                if self.mobs[i].rect.x < 64 * self.step:
-                    self.mobs[i].kill()
-                if self.mobs[i].rect.x > 64 * (64 - self.step):
-                    self.mobs[i].kill()
-                if self.mobs[i].rect.y < 64 * self.step:
-                    self.mobs[i].kill()
-                if self.mobs[i].rect.y > 64 * (64 - self.step):
-                    self.mobs[i].kill()
-
             tiles_group.update()
             entities_group.update()
             animal_group.update()
 
             world_cut_sound.play()
             self.timer_cut = 0
+
+    def check_cows(self):
+        for i in range(len(self.mobs)):
+            # Если животное касается границ, то оно отлетает
+            if self.mobs[i].rect.x < 64 * self.step:
+                self.mobs[i].vx += 10
+            if self.mobs[i].rect.x > 64 * (65 - self.step):
+                self.mobs[i].vx -= 10
+            if self.mobs[i].rect.y < 64 * self.step:
+                self.mobs[i].vy += 10
+            if self.mobs[i].rect.y > 64 * (65 - self.step):
+                self.mobs[i].vy -= 10
+
+        for i in range(len(self.mobs)):
+            for j in range(len(self.mobs)):
+                if self.mobs[i] != self.mobs[j]:
+                    # Если животное касается других, то оно отлетает
+                    if self.mobs[i].rect.collidepoint(self.mobs[j].rect.topleft):
+                        if self.mobs[i].rect.x + 64 < self.mobs[j].rect.x:
+                            self.mobs[i].vy += 5
+                            self.mobs[j].vy -= 5
+
+                        if self.mobs[i].rect.x + 64 > self.mobs[j].rect.x:
+                            self.mobs[i].vy -= 5
+                            self.mobs[j].vy += 5
+
+                        if self.mobs[i].rect.y + 64 < self.mobs[j].rect.y:
+                            self.mobs[i].vy += 5
+                            self.mobs[j].vy -= 5
+
+                        if self.mobs[i].rect.y + 64 > self.mobs[j].rect.y:
+                            self.mobs[i].vy -= 5
+                            self.mobs[j].vy += 5
 
     def run(self):
         self.world.render()
@@ -379,18 +427,28 @@ class Game:  # Инициализация игры
         cursor = load_image("cursor.png")
         cursor = pg.transform.scale(cursor, (64, 64))
 
+        # Кнопки паузы
+        continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
+        continue_rect = continue_txt.get_rect().move(60, 100)
+
+        quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
+        quit_rect = quit_txt.get_rect().move(60, 160)
+
         while self.running:
             screen.fill((0, 0, 0))
-            self.dt = self.clock.tick(self.FPS) / 1000
 
-            self.time_in_game += self.dt
-            self.world_cutting()
-            self.camera.update(self.player)
-            self.update_tiles()
+            if not self.pause:
+                pg.mouse.set_visible(False)
+                self.dt = self.clock.tick(self.FPS) / 1000
+
+                self.time_in_game += self.dt
+                self.world_cutting()
+                self.camera.update(self.player)
+                self.update_tiles()
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
-                    self.quit()
+                    quit()
                     self.running = False
 
                 if event.type == pg.MOUSEMOTION:
@@ -401,36 +459,60 @@ class Game:  # Инициализация игры
                         else:
                             self.player.mirrored = True
 
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_ESCAPE:
-                        open_Menu()
+                    if self.pause:
+                        if continue_rect.collidepoint(event.pos):
+                            continue_txt = start_menu_text.render("Continue", 0, (255, 255, 255))
+                        else:
+                            continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
 
-                    if event.key == pg.K_a or event.key == pg.K_w \
-                            or event.key == pg.K_s or event.key == pg.K_d:
-                        self.player_run()
+                        if quit_rect.collidepoint(event.pos):
+                            quit_txt = start_menu_text.render("Quit", 0, (255, 255, 255))
+                        else:
+                            quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
+
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        if continue_rect.collidepoint(event.pos):
+                            self.pause = False
+
+                        if quit_rect.collidepoint(event.pos):
+                            self.running = False
+
+                if event.type == pg.KEYDOWN:
+                    if not self.pause:
+                        if event.key == pg.K_ESCAPE:
+                            self.pause = True
+                        if event.key == pg.K_a or event.key == pg.K_w \
+                                or event.key == pg.K_s or event.key == pg.K_d:
+                            self.player_run()
 
                 if event.type == pg.KEYUP:
-                    if event.key == pg.K_a or event.key == pg.K_w \
-                            or event.key == pg.K_s or event.key == pg.K_d:
-                        self.player_stay()
+                    if not self.pause:
+                        if event.key == pg.K_a or event.key == pg.K_w \
+                                or event.key == pg.K_s or event.key == pg.K_d:
+                            self.player_stay()
 
-            animal_group.update()
-            all_sprites.update()
+            if self.pause:
+                pg.mouse.set_visible(True)
 
-            inventory_group.draw(screen)
+                screen.blit(continue_txt, (60, 100))
+                screen.blit(quit_txt, (60, 160))
 
-            cursorx = int(self.mousepos[0])
-            cursory = int(self.mousepos[1])
+            if not self.pause:
+                self.check_cows()
 
-            screen.blit(cursor, (cursorx, cursory))
+                animal_group.update()
+                all_sprites.update()
+
+                inventory_group.draw(screen)
+
+                cursorx = int(self.mousepos[0])
+                cursory = int(self.mousepos[1])
+
+                screen.blit(cursor, (cursorx, cursory))
 
             pg.display.flip()
-
-        print(str(datetime.timedelta(seconds=round(self.time_in_game, 2))))
-
-    def quit(self):
-        pg.quit()
-        sys.exit()
+        open_Menu()
 
 
 class TileMap:
@@ -542,10 +624,11 @@ class Camera:
 
 
 class Tile(pg.sprite.Sprite):
-    def __init__(self, type, x, y):
+    def __init__(self, types, x, y):
         super().__init__(tiles_group)
         self.cell_size = 64
-        self.image = tile_images[type]
+        self.type = types
+        self.image = tile_images[types]
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
         self.rect = self.image.get_rect().move(self.cell_size * x,
@@ -553,10 +636,10 @@ class Tile(pg.sprite.Sprite):
 
 
 class Entity(pg.sprite.Sprite):
-    def __init__(self, type, x, y):
+    def __init__(self, types, x, y):
         super().__init__(entities_group)
         self.cell_size = 64
-        self.image = entity_images[type]
+        self.image = entity_images[types]
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
         self.rect = self.image.get_rect().move(self.cell_size * x,
@@ -639,18 +722,33 @@ class Player(pg.sprite.Sprite):
         self.vy = 0
         keys = pg.key.get_pressed()
 
-        if keys[pg.K_a]:
-            self.vx = -self.speed
-            walk_sound.play()
-        if keys[pg.K_d]:
-            self.vx = self.speed
-            walk_sound.play()
-        if keys[pg.K_w]:
-            self.vy = -self.speed
-            walk_sound.play()
-        if keys[pg.K_s]:
-            self.vy = self.speed
-            walk_sound.play()
+        if self.x > self.game.step * 64:
+            if keys[pg.K_a]:
+                self.vx = -self.speed
+                walk_sound.play()
+        else:
+            self.vx += 72  # для более плавного перехода от границы
+
+        if self.x < (65 - self.game.step) * 64:
+            if keys[pg.K_d]:
+                self.vx = self.speed
+                walk_sound.play()
+        else:
+            self.vx -= 72
+
+        if self.y > self.game.step * 64:
+            if keys[pg.K_w]:
+                self.vy = -self.speed
+                walk_sound.play()
+        else:
+            self.vy += 72
+
+        if self.y < (65 - self.game.step) * 64:
+            if keys[pg.K_s]:
+                self.vy = self.speed
+                walk_sound.play()
+        else:
+            self.vy -= 72
 
         if self.vx == self.vy == 0:
             self.state = "stay"
@@ -694,31 +792,27 @@ class Inventory:
 
 
 class Inventory_Tile(pg.sprite.Sprite):
-    def __init__(self, type, x):
+    def __init__(self, types, x):
         super().__init__(inventory_group)
         self.cell_size = 72
-        self.image = inventory_images[type]
+        self.image = inventory_images[types]
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
         self.rect = self.image.get_rect().move(self.cell_size * x + 360, 0)
 
 
 class Drop(pg.sprite.Sprite):
-    def __init__(self, type, player, x, y):
+    def __init__(self, types, player, x, y):
         super().__init__(drop_group)
         self.type = type
         self.cell_size = 64
-        self.image = drop_images[type]
+        self.image = drop_images[types]
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
 
         self.rect = self.image.get_rect().move(self.cell_size * x,
                                                self.cell_size * y)
         self.player = player
-
-    def get_event(self, event):
-        if self.rect.collidepoint((self.player.rect.x, self.player.rect.y)):
-            self.kill()
 
 
 class Cow(pg.sprite.Sprite):
@@ -838,6 +932,11 @@ class Cow(pg.sprite.Sprite):
 def open_Menu():
     men = Menu()
     men.run()
+
+
+def quit():
+    pg.quit()
+    sys.exit()
 
 
 open_Menu()
