@@ -213,8 +213,20 @@ class Game:  # Инициализация игры
 
             self.world.render()
 
+            for i in range(len(self.mobs)):
+                # Если животное касается границ, то оно погибает
+                if self.mobs[i].rect.x < 64 * self.step:
+                    self.mobs[i].kill()
+                if self.mobs[i].rect.x > 64 * (64 - self.step):
+                    self.mobs[i].kill()
+                if self.mobs[i].rect.y < 64 * self.step:
+                    self.mobs[i].kill()
+                if self.mobs[i].rect.y > 64 * (64 - self.step):
+                    self.mobs[i].kill()
+
             tiles_group.update()
             entities_group.update()
+            animal_group.update()
 
             world_cut_sound.play()
             self.timer_cut = 0
