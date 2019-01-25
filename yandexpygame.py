@@ -28,6 +28,9 @@ animal_group = pg.sprite.Group()
 walk_sound = pg.mixer.Sound("sounds\walk2.wav")
 walk_sound.set_volume(0.1)
 
+click_sound = pg.mixer.Sound("sounds\walk.wav")
+click_sound.set_volume(0.4)
+
 world_cut_sound = pg.mixer.Sound("sounds\cut.wav")
 world_cut_sound.set_volume(7.0)
 
@@ -96,15 +99,18 @@ class Menu:
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if start_game_rect.collidepoint(event.pos):
-                        print(0)
+                        click_sound.play()
                         begin_game = Start_Menu()
                         begin_game.run()
 
                     if record_rect.collidepoint(event.pos):
                         print(1)
+                        click_sound.play()
                     if settings_rect.collidepoint(event.pos):
                         print(2)
+                        click_sound.play()
                     if exit_rect.collidepoint(event.pos):
+                        click_sound.play()
                         self.running = False
 
             image = load_image("logo.png")
@@ -125,17 +131,42 @@ class Menu:
 class Start_Menu:
     def __init__(self):
         self.gender = ""
-        self.difficult = "easy"
+        self.difficult = ""
 
     def run(self):
         self.running = True
-        martin_txt = start_menu_text.render("MARTIN", 0, (255, 255, 255))
+        martin_txt = start_menu_text.render("MARTIN", 0, (100, 100, 100))
         martin_rect = martin_txt.get_rect().move(100, 280)
 
-        margo_txt = start_menu_text.render("MARGO", 0, (255, 255, 255))
+        margo_txt = start_menu_text.render("MARGO", 0, (100, 100, 100))
         margo_rect = margo_txt.get_rect().move(400, 280)
 
+        easy_txt = start_menu_text.render("EASY", 0, (100, 100, 100))
+        easy_rect = easy_txt.get_rect().move(60, 400)
+
+        medium_txt = start_menu_text.render("MEDIUM", 0, (100, 100, 100))
+        medium_rect = medium_txt.get_rect().move(240, 400)
+
+        hardcore_txt = start_menu_text.render("HARD", 0, (100, 100, 100))
+        hardcore_rect = hardcore_txt.get_rect().move(470, 400)
+
+        martin_image = load_image("p.png")
+        martin_image = pg.transform.scale(martin_image, (196, 196))
+
+        margo_image = load_image("f.png")
+        margo_image = pg.transform.scale(margo_image, (196, 196))
+
+        press_to_start = start_menu_text.render("CHOOSE A CHARACTER!",
+                                                0, (255, 255, 255))
+
         while self.running:
+            easy_txt = start_menu_text.render("EASY", 0, (100, 100, 100))
+            medium_txt = start_menu_text.render("MEDIUM", 0, (100, 100, 100))
+            hardcore_txt = start_menu_text.render("HARD", 0, (100, 100, 100))
+
+            martin_txt = start_menu_text.render("MARTIN", 0, (100, 100, 100))
+            margo_txt = start_menu_text.render("MARGO", 0, (100, 100, 100))
+
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.quit()
@@ -153,16 +184,38 @@ class Start_Menu:
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if martin_rect.collidepoint(event.pos):
                         self.gender = "male"
+                        click_sound.play()
                     if margo_rect.collidepoint(event.pos):
                         self.gender = "female"
+                        click_sound.play()
+
+                    if self.gender:
+                        if easy_rect.collidepoint(event.pos):
+                            self.difficult = "easy"
+                            click_sound.play()
+                        if medium_rect.collidepoint(event.pos):
+                            self.difficult = "medium"
+                            click_sound.play()
+                        if hardcore_rect.collidepoint(event.pos):
+                            self.difficult = "hardcore"
+                            click_sound.play()
 
             screen.fill((0, 0, 0))
 
-            martin_image = load_image("p.png")
-            martin_image = pg.transform.scale(martin_image, (196, 196))
+            if self.gender == "female":
+                margo_txt = start_menu_text.render("MARGO", 0, (255, 255, 255))
 
-            margo_image = load_image("f.png")
-            margo_image = pg.transform.scale(margo_image, (196, 196))
+            if self.gender == "male":
+                martin_txt = start_menu_text.render("MARTIN", 0, (255, 255, 255))
+
+            if self.difficult == "easy":
+                easy_txt = start_menu_text.render("EASY", 0, (255, 255, 255))
+
+            if self.difficult == "medium":
+                medium_txt = start_menu_text.render("MEDIUM", 0, (255, 255, 255))
+
+            if self.difficult == "hardcore":
+                hardcore_txt = start_menu_text.render("HARD", 0, (255, 255, 255))
 
             screen.blit(martin_image, (70, 80))
             screen.blit(margo_image, (370, 80))
@@ -170,10 +223,21 @@ class Start_Menu:
             screen.blit(martin_txt, (100, 280))
             screen.blit(margo_txt, (400, 280))
 
+            screen.blit(easy_txt, (60, 400))
+            screen.blit(medium_txt, (240, 400))
+            screen.blit(hardcore_txt, (470, 400))
+
             if self.difficult != "" and self.gender != "":
                 press_to_start = start_menu_text.render("PRESS SPACE TO BEGIN!",
                                                         0, (255, 255, 255))
                 screen.blit(press_to_start, (70, 20))
+
+            elif self.difficult == "" and self.gender:
+                press_to_start = start_menu_text.render("CHOOSE DIFFUCLTY!",
+                                                        0, (255, 255, 255))
+                screen.blit(press_to_start, (130, 20))
+            elif self.difficult == "" and self.gender == "":
+                screen.blit(press_to_start, (110, 20))
 
             pg.display.flip()
         open_Menu()
@@ -228,7 +292,7 @@ class Game:  # Инициализация игры
 
         if self.difficult == "easy":
             self.cell_timer = 15
-        if self.difficult == "middle":
+        if self.difficult == "medium":
             self.cell_timer = 7.5
         if self.difficult == "hardcore":
             self.cell_timer = 3.75
@@ -326,6 +390,7 @@ class Game:  # Инициализация игры
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
+                    self.quit()
                     self.running = False
 
                 if event.type == pg.MOUSEMOTION:
@@ -338,7 +403,7 @@ class Game:  # Инициализация игры
 
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
-                        self.quit()
+                        open_Menu()
 
                     if event.key == pg.K_a or event.key == pg.K_w \
                             or event.key == pg.K_s or event.key == pg.K_d:
@@ -362,7 +427,6 @@ class Game:  # Инициализация игры
             pg.display.flip()
 
         print(str(datetime.timedelta(seconds=round(self.time_in_game, 2))))
-        pg.quit()
 
     def quit(self):
         pg.quit()
