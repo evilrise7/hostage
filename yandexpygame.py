@@ -16,6 +16,7 @@ screen = pg.display.set_mode((WIDTH, HEIGHT))
 pg.key.set_repeat(500, 100)
 
 menu_text = pg.font.Font('cyr.ttf', 36)
+start_menu_text = pg.font.Font('cyr.ttf', 48)
 
 all_sprites = pg.sprite.Group()
 tiles_group = pg.sprite.Group()
@@ -24,7 +25,6 @@ inventory_group = pg.sprite.Group()
 drop_group = pg.sprite.Group()
 animal_group = pg.sprite.Group()
 
-#sounds
 walk_sound = pg.mixer.Sound("sounds\walk2.wav")
 walk_sound.set_volume(0.1)
 
@@ -71,7 +71,6 @@ drop_images = {"meat": load_image('meat.png')}
 class Menu:
     def __init__(self):
         pg.mouse.set_visible(True)
-        pass
 
     def run(self):
         self.running = True
@@ -92,11 +91,14 @@ class Menu:
                 if event.type == pg.QUIT:
                     self.running = False
 
+                if event.type == pg.K_ESCAPE:
+                    self.running = False
+
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if start_game_rect.collidepoint(event.pos):
                         print(0)
-                        world = Game(difficult="hardcore")
-                        world.run()
+                        begin_game = Start_Menu()
+                        begin_game.run()
 
                     if record_rect.collidepoint(event.pos):
                         print(1)
@@ -117,10 +119,72 @@ class Menu:
 
             pg.display.flip()
         pg.quit()
+        sys.exit()
+
+
+class Start_Menu:
+    def __init__(self):
+        self.gender = ""
+        self.difficult = "easy"
+
+    def run(self):
+        self.running = True
+        martin_txt = start_menu_text.render("MARTIN", 0, (255, 255, 255))
+        martin_rect = martin_txt.get_rect().move(100, 280)
+
+        margo_txt = start_menu_text.render("MARGO", 0, (255, 255, 255))
+        margo_rect = margo_txt.get_rect().move(400, 280)
+
+        while self.running:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.quit()
+                    self.running = False
+
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.running = False
+
+                    if event.key == pg.K_SPACE:
+                        if self.difficult != "" and self.gender != "":
+                            world = Game(difficult=self.difficult, boyorgirl=self.gender)
+                            world.run()
+
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    if martin_rect.collidepoint(event.pos):
+                        self.gender = "male"
+                    if margo_rect.collidepoint(event.pos):
+                        self.gender = "female"
+
+            screen.fill((0, 0, 0))
+
+            martin_image = load_image("p.png")
+            martin_image = pg.transform.scale(martin_image, (196, 196))
+
+            margo_image = load_image("f.png")
+            margo_image = pg.transform.scale(margo_image, (196, 196))
+
+            screen.blit(martin_image, (70, 80))
+            screen.blit(margo_image, (370, 80))
+
+            screen.blit(martin_txt, (100, 280))
+            screen.blit(margo_txt, (400, 280))
+
+            if self.difficult != "" and self.gender != "":
+                press_to_start = start_menu_text.render("PRESS SPACE TO BEGIN!",
+                                                        0, (255, 255, 255))
+                screen.blit(press_to_start, (70, 20))
+
+            pg.display.flip()
+        open_Menu()
+
+    def quit(self):
+        pg.quit()
+        sys.exit()
 
 
 class Game:  # Инициализация игры
-    def __init__(self, difficult="easy"):
+    def __init__(self, difficult="easy", boyorgirl="male"):
         pg.mouse.set_visible(False)
         self.dt = 0
         self.FPS = 60
@@ -154,7 +218,7 @@ class Game:  # Инициализация игры
             posx = random.randint(48, 63)
             posy = random.randint(48, 63)
 
-        self.player = Player(all_sprites, self, posx, posy, 64)
+        self.player = Player(all_sprites, self, posx, posy, 64, boyorgirl)
         self.camera = Camera()
 
         self.mobs = []
@@ -176,9 +240,15 @@ class Game:  # Инициализация игры
 
     def gender(self):
         if self.player.gender == "male":
-            self.player.cut_sheet(load_image("p_sheet.png"))
+            if self.player.mirrored:
+                self.player.cut_sheet(load_image("pm_sheet.png"))
+            else:
+                self.player.cut_sheet(load_image("p_sheet.png"))
         else:
-            self.player.cut_sheet(load_image("f_sheet.png"))
+            if self.player.mirrored:
+                self.player.cut_sheet(load_image("fm_sheet.png"))
+            else:
+                self.player.cut_sheet(load_image("f_sheet.png"))
 
     def player_stay(self):
         self.player.state = "stay"
@@ -261,6 +331,10 @@ class Game:  # Инициализация игры
                 if event.type == pg.MOUSEMOTION:
                     if pg.mouse.get_focused():
                         self.mousepos = event.pos
+                        if self.mousepos[0] < 320:
+                            self.player.mirrored = False
+                        else:
+                            self.player.mirrored = True
 
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
@@ -274,6 +348,7 @@ class Game:  # Инициализация игры
                     if event.key == pg.K_a or event.key == pg.K_w \
                             or event.key == pg.K_s or event.key == pg.K_d:
                         self.player_stay()
+
             animal_group.update()
             all_sprites.update()
 
@@ -434,15 +509,15 @@ class Entity(pg.sprite.Sprite):
 
 
 class Player(pg.sprite.Sprite):
-    def __init__(self, group, game, x, y, cell_size):
+    def __init__(self, group, game, x, y, cell_size, gender):
         super().__init__(group)
         self.game = game
         self.state = "stay"
         self.tmpstate = False
         self.frames = []
         self.cur_frame = 0
-
-        self.gender = "male"
+        self.mirrored = False
+        self.gender = gender
 
         if self.gender == "male":
             self.cut_sheet(load_image("p_sheet.png"))
@@ -463,6 +538,9 @@ class Player(pg.sprite.Sprite):
         self.timer = 0
         self.x = x * cell_size
         self.y = y * cell_size
+
+        self.left = pg.transform.flip(self.image, False, False)
+        self.right = pg.transform.flip(self.image, True, False)
 
     def comparestates(self):
         if self.tmpstate != self.state:
@@ -517,6 +595,7 @@ class Player(pg.sprite.Sprite):
 
     def update(self):
         self.timer += self.game.dt
+
         if self.state == "stay":
             if self.timer > 0.5:
                 self.cur_frame = (self.cur_frame + 1) % len(self.frames)
@@ -528,12 +607,10 @@ class Player(pg.sprite.Sprite):
                 self.cur_frame = (self.cur_frame + 1) % len(self.frames)
                 self.image = self.frames[self.cur_frame]
                 self.timer = 0
-
         self.image = pg.transform.scale(self.image,
                                         (int(self.size[0] * 4),
                                          int(self.size[1] * 4)))
         self.key_movement()
-
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
@@ -694,8 +771,9 @@ class Cow(pg.sprite.Sprite):
         self.rect.y = self.y
 
 
-men = Menu()
-men.run()
-#Создание/Отрисовка мира
-#world = Game(difficult="hardcore")
-#world.run()
+def open_Menu():
+    men = Menu()
+    men.run()
+
+
+open_Menu()
