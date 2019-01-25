@@ -6,13 +6,16 @@ import datetime
 
 
 pg.init()
+pg.mixer.init()
+
 pg.display.set_caption("Hell Obtained Sensible Tiny And Geniusly Emmy.")
 pg.display.set_icon(pg.image.load("sprites\icon.png"))
 WIDTH = 640
 HEIGHT = 512
 screen = pg.display.set_mode((WIDTH, HEIGHT))
-pg.mouse.set_visible(False)
 pg.key.set_repeat(500, 100)
+
+menu_text = pg.font.Font('cyr.ttf', 36)
 
 all_sprites = pg.sprite.Group()
 tiles_group = pg.sprite.Group()
@@ -20,6 +23,13 @@ entities_group = pg.sprite.Group()
 inventory_group = pg.sprite.Group()
 drop_group = pg.sprite.Group()
 animal_group = pg.sprite.Group()
+
+#sounds
+walk_sound = pg.mixer.Sound("sounds\walk2.wav")
+walk_sound.set_volume(0.1)
+
+world_cut_sound = pg.mixer.Sound("sounds\cut.wav")
+world_cut_sound.set_volume(7.0)
 
 
 def load_image(name, colorkey=None):
@@ -58,15 +68,67 @@ inventory_images = {"empty": load_image('empty.png'),
 drop_images = {"meat": load_image('meat.png')}
 
 
-class Game:  # Инициализация игры
+class Menu:
     def __init__(self):
+        pg.mouse.set_visible(True)
+        pass
+
+    def run(self):
+        self.running = True
+        start_game = menu_text.render("Start Game", 0, (255, 255, 255))
+        start_game_rect = start_game.get_rect().move(80, 150)
+
+        record_txt = menu_text.render("Scores", 0, (255, 255, 255))
+        record_rect = record_txt.get_rect().move(80, 200)
+
+        settings_txt = menu_text.render("Settings", 0, (255, 255, 255))
+        settings_rect = settings_txt.get_rect().move(80, 250)
+
+        exit_txt = menu_text.render("Quit", 0, (255, 255, 255))
+        exit_rect = exit_txt.get_rect().move(80, 300)
+
+        while self.running:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.running = False
+
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    if start_game_rect.collidepoint(event.pos):
+                        print(0)
+                        world = Game(difficult="hardcore")
+                        world.run()
+
+                    if record_rect.collidepoint(event.pos):
+                        print(1)
+                    if settings_rect.collidepoint(event.pos):
+                        print(2)
+                    if exit_rect.collidepoint(event.pos):
+                        self.running = False
+
+            image = load_image("logo.png")
+            image = pg.transform.scale(image, (144, 196))
+
+            screen.fill((0, 0, 0))
+            screen.blit(image, (400, 150))
+            screen.blit(start_game, (80, 150))
+            screen.blit(record_txt, (80, 200))
+            screen.blit(settings_txt, (80, 250))
+            screen.blit(exit_txt, (80, 300))
+
+            pg.display.flip()
+        pg.quit()
+
+
+class Game:  # Инициализация игры
+    def __init__(self, difficult="easy"):
+        pg.mouse.set_visible(False)
         self.dt = 0
         self.FPS = 60
         self.clock = pg.time.Clock()
         self.timer_cut = 0
         self.time_in_game = 0
         self.mousepos = (0, 0)
-
+        self.difficult = difficult
         self.step = 1
 
         self.world = TileMap()
@@ -100,6 +162,13 @@ class Game:  # Инициализация игры
             self.mobs.append(Cow(animal_group,
                                  self, random.randint(2, 62), random.randint(2, 62), 64))
 
+        if self.difficult == "easy":
+            self.cell_timer = 15
+        if self.difficult == "middle":
+            self.cell_timer = 7.5
+        if self.difficult == "hardcore":
+            self.cell_timer = 3.75
+
     def player_run(self):
         self.player.state = "run"
         self.player.timer = 0.05
@@ -130,7 +199,7 @@ class Game:  # Инициализация игры
 
     def world_cutting(self):
         self.timer_cut += self.dt
-        if self.timer_cut > 1:
+        if self.timer_cut > self.cell_timer:
             tiles_group.empty()  # очистка всех спрайтов, чтобы не нагружать память
             self.step += 1
 
@@ -147,6 +216,7 @@ class Game:  # Инициализация игры
             tiles_group.update()
             entities_group.update()
 
+            world_cut_sound.play()
             self.timer_cut = 0
 
     def run(self):
@@ -204,8 +274,8 @@ class Game:  # Инициализация игры
 
             pg.display.flip()
 
-        pg.quit()
         print(str(datetime.timedelta(seconds=round(self.time_in_game, 2))))
+        pg.quit()
 
     def quit(self):
         pg.quit()
@@ -417,12 +487,16 @@ class Player(pg.sprite.Sprite):
 
         if keys[pg.K_a]:
             self.vx = -self.speed
+            walk_sound.play()
         if keys[pg.K_d]:
             self.vx = self.speed
+            walk_sound.play()
         if keys[pg.K_w]:
             self.vy = -self.speed
+            walk_sound.play()
         if keys[pg.K_s]:
             self.vy = self.speed
+            walk_sound.play()
 
         if self.vx == self.vy == 0:
             self.state = "stay"
@@ -608,6 +682,8 @@ class Cow(pg.sprite.Sprite):
         self.rect.y = self.y
 
 
-# Создание/Отрисовка мира
-world = Game()
-world.run()
+men = Menu()
+men.run()
+#Создание/Отрисовка мира
+#world = Game(difficult="hardcore")
+#world.run()
