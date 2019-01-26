@@ -322,9 +322,10 @@ class Game:  # Инициализация игры
         self.player = Player(all_sprites, self, posx - 0.5, posy - 0.5, 64, boyorgirl)
         self.camera = Camera()
         self.inventory = Inventory()
+        self.craft = Craft()
 
         self.mobs = []
-        for _ in range(random.randint(24, 32)):
+        for _ in range(random.randint(18, 24)):
             self.mobs.append(Cow(animal_group,
                                  self, random.randint(2, 62), random.randint(2, 62), 64))
         self.drop = []
@@ -480,10 +481,12 @@ class Game:  # Инициализация игры
         self.tmpmobs.clear()
 
     def run(self):
+        # Загружаю мир и инвентарь
         self.world.render()
         self.inventory.render()
         self.running = True
 
+        # Обновляю группы спрайтов
         tiles_group.update()
         all_sprites.update()
         animal_group.update()
@@ -498,8 +501,13 @@ class Game:  # Инициализация игры
         quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
         quit_rect = quit_txt.get_rect().move(60, 160)
 
-        self.tmplist = []  # Лист, чтобы прослеживать уже добавленные предметы
+        # Лист, чтобы прослеживать уже добавленные предметы
+        self.tmplist = []
 
+        self.cursor = load_image("cursor.png")
+        self.cursor = pg.transform.scale(self.cursor, (72, 72))
+
+        current_cursor_pos = 0
         while self.running:
             screen.fill((0, 0, 0))
             if not self.pause:
@@ -604,9 +612,14 @@ class Game:  # Инициализация игры
                                 self.tool = "scissors"
                             else:
                                 self.tool = "axe"
-
                         if event.key == pg.K_k:
                             self.cow_and_player()
+
+                        if event.key == pg.K_p:
+                            if current_cursor_pos < 3:
+                                current_cursor_pos += 1
+                            else:
+                                current_cursor_pos = 0
 
                 if event.type == pg.KEYUP:
                     if not self.pause:
@@ -636,6 +649,21 @@ class Game:  # Инициализация игры
                 screen.blit(start_menu_text.render(str(self.tool),
                                                    0, (255, 255, 255)), (64, 72))
                 screen.blit(axe_scissors, (64, 0))
+                screen.blit(self.cursor, (72 * current_cursor_pos + 300, 0))
+
+                #Предложенный кравт
+                self.craft.craft_type = -1
+                for i in range(self.inventory.w):
+                    if self.inventory.inv[0][i] == "meat" or self.inventory.inv[0][i] == "eyes":
+                        if current_cursor_pos == i:
+                            if self.inventory.check_craft_meat():
+                                self.craft.craft_type = 0
+                    if self.inventory.inv[0][i] == "gold":
+                        if current_cursor_pos == i:
+                            if self.inventory.check_craft_gold():
+                                self.craft.craft_type = 1
+
+                self.craft.render()
 
             pg.display.flip()
         open_Menu()
@@ -923,8 +951,9 @@ class Player(pg.sprite.Sprite):
 
 class Inventory:
     def __init__(self):
-        self.w = 3
+        self.w = 4
         self.inv = [[0] * self.w for _ in range(2)]
+        # self.inv = [["gold", "meat", "eyes", 0], [2, 9, 9, 0]]
         self.invtmp = []
 
     def render(self):
@@ -954,10 +983,12 @@ class Inventory:
         self.element1 = start_menu_text.render(str(self.inv[1][0]), 0, (255, 255, 255))
         self.element2 = start_menu_text.render(str(self.inv[1][1]), 0, (255, 255, 255))
         self.element3 = start_menu_text.render(str(self.inv[1][2]), 0, (255, 255, 255))
+        self.element4 = start_menu_text.render(str(self.inv[1][3]), 0, (255, 255, 255))
 
-        screen.blit(self.element1, (416, 72))
-        screen.blit(self.element2, (480, 72))
-        screen.blit(self.element3, (552, 72))
+        screen.blit(self.element1, (356, 72))
+        screen.blit(self.element2, (420, 72))
+        screen.blit(self.element3, (492, 72))
+        screen.blit(self.element4, (564, 72))
 
     def append(self, type):
         for i in range(self.w):
@@ -971,6 +1002,42 @@ class Inventory:
                     self.inv[0][i] = type
                     self.inv[1][i] += 1
 
+    def check_craft_meat(self):
+        b = 0
+        for i in range(self.w):
+            if self.inv[0][i] == "meat" and self.inv[1][i] >= 9:
+                b += 1
+            if self.inv[0][i] == "eyes" and self.inv[1][i] >= 9:
+                b += 1
+        if b == 2:
+            return True
+        else:
+            return False
+
+    def check_craft_gold(self):
+        b = 0
+        for i in range(self.w):
+            if self.inv[0][i] == "gold" and self.inv[1][i] == 2:
+                b += 1
+        return b
+
+
+class Craft:
+    def __init__(self):
+        self.craft_meat = load_image("craft_meat.png")
+        self.craft_meat = pg.transform.scale(self.craft_meat, (360, 72))
+
+        self.craft_gold = load_image("craft_gold.png")
+        self.craft_gold = pg.transform.scale(self.craft_gold, (360, 72))
+        self.craft_type = -1
+
+    def render(self):
+        if self.craft_type == 0:
+            screen.blit(self.craft_meat, (150, 440))
+
+        if self.craft_type == 1:
+            screen.blit(self.craft_gold, (150, 440))
+
 
 class Inventory_Tile(pg.sprite.Sprite):
     def __init__(self, types, x):
@@ -979,7 +1046,7 @@ class Inventory_Tile(pg.sprite.Sprite):
         self.image = inventory_images[types]
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
-        self.rect = self.image.get_rect().move(self.cell_size * x + 360, 0)
+        self.rect = self.image.get_rect().move(self.cell_size * x + 300, 0)
 
 
 class Drop(pg.sprite.Sprite):
