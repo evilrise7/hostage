@@ -270,6 +270,31 @@ class Start_Menu:
         open_Menu()
 
 
+class Game_Over:
+    def __init__(self, score):
+        self.score = score
+
+    def run(self):
+        self.running = True
+        while self.running:
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    quit()
+                    self.running = False
+
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.running = False
+
+            screen.fill((0, 0, 0))
+            screen.blit(start_menu_text.render("Game Over", 0, (255, 0, 0)), (200, 200))
+            screen.blit(menu_text.render("Your Score:", 0, (255, 255, 255)), (225, 250))
+            screen.blit(menu_text.render(str(self.score), 0, (255, 255, 255)), (250, 290))
+            pg.display.flip()
+        open_Menu()
+
+
 class Game:  # Инициализация игры
     def __init__(self, difficult="easy", boyorgirl="male"):
         self.clear_tiles()
@@ -516,6 +541,7 @@ class Game:  # Инициализация игры
                 self.camera.update(self.player)
                 self.update_tiles()
 
+                # Кравт отображение
                 self.craft.craft_type = -1
                 for i in range(self.inventory.w):
                     if self.inventory.inv[0][i] == "meat" or self.inventory.inv[0][i] == "eyes":
@@ -683,6 +709,8 @@ class Game:  # Инициализация игры
                 screen.blit(quit_txt, (60, 160))
 
             if not self.pause:
+                if self.step == 33:
+                    Game_Over(str(datetime.timedelta(seconds=int(self.time_in_game)))).run()
                 self.check_cows()
 
                 animal_group.update()
