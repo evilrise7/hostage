@@ -420,6 +420,13 @@ class Game:  # Инициализация игры
                             self.mobs[i].vy -= 5
                             self.mobs[j].vy += 5
 
+    def append_drop(self, x, y):
+        b = random.randint(0, 100)
+        if b == 0:
+            self.drop.append(Drop("gold", self.player, x, y))
+        if b == 100:
+            self.drop.append(Drop("silver_sword", self.player, x, y))
+
     def run(self):
         self.world.render()
         self.inventory.render()
@@ -518,27 +525,27 @@ class Game:  # Инициализация игры
 
                             if self.world.entities[y][x - 1]:
                                 self.world.entities[y][x - 1] = 0
-                                self.drop.append(Drop("gold", self.player, x - 1, y))
+                                self.append_drop(x - 1, y)
                                 ifdestroy = True
 
                             if self.world.entities[y][x + 1]:
                                 self.world.entities[y][x + 1] = 0
-                                self.drop.append(Drop("gold", self.player, x + 1, y))
+                                self.append_drop(x + 1, y)
                                 ifdestroy = True
 
                             if self.world.entities[y + 1][x]:
                                 self.world.entities[y + 1][x] = 0
-                                self.drop.append(Drop("gold", self.player, x, y + 1))
+                                self.append_drop(x, y + 1)
                                 ifdestroy = True
 
                             if self.world.entities[y - 1][x]:
                                 self.world.entities[y - 1][x] = 0
-                                self.drop.append(Drop("gold", self.player, x, y - 1))
+                                self.append_drop(x, y - 1)
                                 ifdestroy = True
 
                             if self.world.entities[y][x]:
                                 self.world.entities[y][x] = 0
-                                self.drop.append(Drop("gold", self.player, x, y))
+                                self.append_drop(x, y)
                                 ifdestroy = True
 
                             if ifdestroy:
@@ -861,6 +868,16 @@ class Inventory:
                 Inventory_Tile('empty', i)
             if self.inv[0][i] == "gold":
                 Inventory_Tile('gold', i)
+            if self.inv[0][i] == "silver_sword":
+                Inventory_Tile('silver_sword', i)
+
+        self.element1 = start_menu_text.render(str(self.inv[1][0]), 0, (255, 255, 255))
+        self.element2 = start_menu_text.render(str(self.inv[1][1]), 0, (255, 255, 255))
+        self.element3 = start_menu_text.render(str(self.inv[1][2]), 0, (255, 255, 255))
+
+        screen.blit(self.element1, (416, 72))
+        screen.blit(self.element2, (480, 72))
+        screen.blit(self.element3, (552, 72))
 
     def append(self, type):
         for i in range(self.w):
