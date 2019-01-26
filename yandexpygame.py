@@ -10,9 +10,8 @@ pg.mixer.init()
 
 pg.display.set_caption("Hell Obtained Sensible Tiny And Geniusly Emmy.")
 pg.display.set_icon(pg.image.load("sprites\icon.png"))
-WIDTH = 640
-HEIGHT = 512
-screen = pg.display.set_mode((WIDTH, HEIGHT))
+
+screen = pg.display.set_mode((640, 512))
 pg.key.set_repeat(500, 100)
 
 menu_text = pg.font.Font('cyr.ttf', 36)
@@ -34,8 +33,8 @@ click_sound.set_volume(0.4)
 world_cut_sound = pg.mixer.Sound("sounds\cut.wav")
 world_cut_sound.set_volume(7.0)
 
-entities_destroy = pg.mixer.Sound("sounds\cow_walk.wav")
-entities_destroy.set_volume(0.3)
+entities_destroy = pg.mixer.Sound("sounds\pick.wav")
+entities_destroy.set_volume(0.4)
 
 
 def load_image(name, colorkey=None):
@@ -71,7 +70,11 @@ inventory_images = {"empty": load_image('empty.png'),
                     "gold_sword": load_image('gold_sword_inv.png'),
                     "silver_sword": load_image('silver_sword_inv.png')}
 
-drop_images = {"meat": load_image('meat.png')}
+drop_images = {"meat": load_image('meat.png'),
+               "gold": load_image('gold.png'),
+               "eyes": load_image('eyes.png'),
+               "gold_sword": load_image('gold_sword.png'),
+               "silver_sword": load_image('silver_sword.png')}
 
 
 class Menu:
@@ -305,11 +308,13 @@ class Game:  # Инициализация игры
 
         self.player = Player(all_sprites, self, posx - 0.5, posy - 0.5, 64, boyorgirl)
         self.camera = Camera()
+        self.inventory = Inventory()
 
         self.mobs = []
         for _ in range(random.randint(24, 32)):
             self.mobs.append(Cow(animal_group,
                                  self, random.randint(2, 62), random.randint(2, 62), 64))
+        self.drop = []
 
         if self.difficult == "easy":
             self.cell_timer = 15
@@ -349,8 +354,6 @@ class Game:  # Инициализация игры
         self.gender()
 
     def update_tiles(self):
-        for sprite in drop_group:
-            screen.blit(sprite.image, self.camera.apply(sprite))
         for sprite in tiles_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
         for sprite in entities_group:
@@ -358,6 +361,8 @@ class Game:  # Инициализация игры
         for sprite in animal_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
         for sprite in all_sprites:
+            screen.blit(sprite.image, self.camera.apply(sprite))
+        for sprite in drop_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
 
     def world_cutting(self):
@@ -425,6 +430,7 @@ class Game:  # Инициализация игры
         animal_group.update()
         inventory_group.update()
         entities_group.update()
+        drop_group.update()
 
         # Кнопки паузы
         continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
@@ -432,6 +438,8 @@ class Game:  # Инициализация игры
 
         quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
         quit_rect = quit_txt.get_rect().move(60, 160)
+
+        self.tmplist = []  # Лист, чтобы прослеживать уже добавленные предметы
 
         while self.running:
             screen.fill((0, 0, 0))
@@ -478,6 +486,22 @@ class Game:  # Инициализация игры
                                 self.running = False
 
                 if event.type == pg.KEYDOWN:
+                    # Очистка дропа, если касается игрок.
+                    if self.drop:
+                        for i in range(len(self.drop)):
+                            if self.drop[i].get_event() == 1:
+                                self.drop[i].kill()
+                                self.inventory.append(self.drop[i].type)
+                                self.tmplist.append(i)
+
+                    if self.tmplist:
+                        for i in range(len(self.tmplist)):
+                            del self.drop[self.tmplist[i]]
+
+                    self.tmplist.clear()
+                    print(self.inventory.inv)
+                    # Сверху, очистки блок
+
                     if not self.pause:
                         if event.key == pg.K_ESCAPE:
                             self.pause = True
@@ -486,6 +510,7 @@ class Game:  # Инициализация игры
                                 or event.key == pg.K_s or event.key == pg.K_d:
                             self.player_run()
 
+                        #  Уничтожение блоков
                         if event.key == pg.K_SPACE:
                             ifdestroy = False
                             x = int((self.player.rect.x + 32) / 4096 * 64)
@@ -493,28 +518,34 @@ class Game:  # Инициализация игры
 
                             if self.world.entities[y][x - 1]:
                                 self.world.entities[y][x - 1] = 0
+                                self.drop.append(Drop("gold", self.player, x - 1, y))
                                 ifdestroy = True
 
                             if self.world.entities[y][x + 1]:
                                 self.world.entities[y][x + 1] = 0
+                                self.drop.append(Drop("gold", self.player, x + 1, y))
                                 ifdestroy = True
 
                             if self.world.entities[y + 1][x]:
                                 self.world.entities[y + 1][x] = 0
+                                self.drop.append(Drop("gold", self.player, x, y + 1))
                                 ifdestroy = True
 
                             if self.world.entities[y - 1][x]:
                                 self.world.entities[y - 1][x] = 0
+                                self.drop.append(Drop("gold", self.player, x, y - 1))
                                 ifdestroy = True
 
                             if self.world.entities[y][x]:
                                 self.world.entities[y][x] = 0
+                                self.drop.append(Drop("gold", self.player, x, y))
                                 ifdestroy = True
 
                             if ifdestroy:
                                 self.world.render()
                                 entities_destroy.play()
                                 entities_group.update()
+                                drop_group.update()
                                 ifdestroy = False
 
                 if event.type == pg.KEYUP:
@@ -535,7 +566,10 @@ class Game:  # Инициализация игры
                 animal_group.update()
                 all_sprites.update()
 
+                self.inventory.render()
+                inventory_group.update()
                 inventory_group.draw(screen)
+
             pg.display.flip()
         open_Menu()
 
@@ -818,12 +852,27 @@ class Inventory:
     def __init__(self):
         self.w = 3
         self.inv = [[0] * self.w for _ in range(2)]
+        self.invtmp = []
 
     def render(self):
+        inventory_group.empty()
         for i in range(self.w):
-            for j in range(1):
-                if self.inv[j][i] == 0:
-                    Inventory_Tile('gold', i)
+            if self.inv[0][i] == 0:
+                Inventory_Tile('empty', i)
+            if self.inv[0][i] == "gold":
+                Inventory_Tile('gold', i)
+
+    def append(self, type):
+        for i in range(self.w):
+            if type not in self.invtmp:
+                if self.inv[0][i] == 0:
+                    self.inv[0][i] = type
+                    self.inv[1][i] += 1
+                    self.invtmp.append(type)
+            else:
+                if self.inv[0][i] == type:
+                    self.inv[0][i] = type
+                    self.inv[1][i] += 1
 
 
 class Inventory_Tile(pg.sprite.Sprite):
@@ -839,7 +888,7 @@ class Inventory_Tile(pg.sprite.Sprite):
 class Drop(pg.sprite.Sprite):
     def __init__(self, types, player, x, y):
         super().__init__(drop_group)
-        self.type = type
+        self.type = types
         self.cell_size = 64
         self.image = drop_images[types]
         self.image = pg.transform.scale(self.image,
@@ -848,6 +897,11 @@ class Drop(pg.sprite.Sprite):
         self.rect = self.image.get_rect().move(self.cell_size * x,
                                                self.cell_size * y)
         self.player = player
+
+    def get_event(self):
+        if self.rect.collidepoint((self.player.rect.x + 32),
+                                  (self.player.rect.y + 32)):
+            return True
 
 
 class Cow(pg.sprite.Sprite):
