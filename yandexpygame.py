@@ -272,6 +272,8 @@ class Game:  # Инициализация игры
     def __init__(self, difficult="easy", boyorgirl="male"):
         self.clear_tiles()
 
+        self.tool = "axe"
+
         self.pause = False
         self.dt = 0
         self.FPS = 100
@@ -572,6 +574,12 @@ class Game:  # Инициализация игры
                                 drop_group.update()
                                 ifdestroy = False
 
+                        if event.key == pg.K_o:
+                            if self.tool == "axe":
+                                self.tool = "scissors"
+                            else:
+                                self.tool = "axe"
+
                 if event.type == pg.KEYUP:
                     if not self.pause:
                         if event.key == pg.K_a or event.key == pg.K_w \
@@ -593,6 +601,13 @@ class Game:  # Инициализация игры
                 self.inventory.render()
                 inventory_group.update()
                 inventory_group.draw(screen)
+
+                axe_scissors = load_image(str(self.tool) + ".png")
+                axe_scissors = pg.transform.scale(axe_scissors, (72, 72))
+
+                screen.blit(start_menu_text.render(str(self.tool),
+                                                   0, (255, 255, 255)), (64, 72))
+                screen.blit(axe_scissors, (64, 0))
 
             pg.display.flip()
         open_Menu()
