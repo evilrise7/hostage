@@ -483,13 +483,6 @@ class Game:  # Инициализация игры
                     self.running = False
 
                 if event.type == pg.MOUSEMOTION:
-                    if pg.mouse.get_focused():
-                        self.mousepos = event.pos
-                        if self.mousepos[0] < 320:
-                            self.player.mirrored = False
-                        else:
-                            self.player.mirrored = True
-
                     if self.pause:
                         if continue_rect.collidepoint(event.pos):
                             continue_txt = start_menu_text.render("Continue", 0, (255, 255, 255))
@@ -593,6 +586,7 @@ class Game:  # Инициализация игры
                 screen.blit(quit_txt, (60, 160))
 
             if not self.pause:
+                print(self.player.rect.x % 640, self.player.rect.y % 512)
                 self.check_cows()
 
                 animal_group.update()
@@ -832,29 +826,35 @@ class Player(pg.sprite.Sprite):
 
         if self.x > self.game.step * 64:
             if keys[pg.K_a]:
-                self.vx = -self.speed
-                walk_sound.play()
+                if self.vy == 0:
+                    self.vx = -self.speed
+                    walk_sound.play()
+                    self.mirrored = False
         else:
             self.vx += 72  # для более плавного перехода от границы
 
         if self.x < (65 - self.game.step) * 64:
             if keys[pg.K_d]:
-                self.vx = self.speed
-                walk_sound.play()
+                if self.vy == 0:
+                    self.vx = self.speed
+                    walk_sound.play()
+                    self.mirrored = True
         else:
             self.vx -= 72
 
         if self.y > self.game.step * 64:
             if keys[pg.K_w]:
-                self.vy = -self.speed
-                walk_sound.play()
+                if self.vx == 0:
+                    self.vy = -self.speed
+                    walk_sound.play()
         else:
             self.vy += 72
 
         if self.y < (65 - self.game.step) * 64:
             if keys[pg.K_s]:
-                self.vy = self.speed
-                walk_sound.play()
+                if self.vx == 0:
+                    self.vy = self.speed
+                    walk_sound.play()
         else:
             self.vy -= 72
 
