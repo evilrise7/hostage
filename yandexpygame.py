@@ -34,6 +34,9 @@ click_sound.set_volume(0.4)
 world_cut_sound = pg.mixer.Sound("sounds\cut.wav")
 world_cut_sound.set_volume(7.0)
 
+entities_destroy = pg.mixer.Sound("sounds\cow_walk.wav")
+entities_destroy.set_volume(0.3)
+
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('sprites', name)
@@ -268,7 +271,7 @@ class Game:  # Инициализация игры
 
         self.pause = False
         self.dt = 0
-        self.FPS = 60
+        self.FPS = 100
         self.clock = pg.time.Clock()
         self.timer_cut = 0
         self.time_in_game = 0
@@ -297,10 +300,10 @@ class Game:  # Инициализация игры
             posy = random.randint(32, 47)
 
         if quarter == 4:
-            posx = random.randint(48, 63)
-            posy = random.randint(48, 63)
+            posx = random.randint(48, 62)
+            posy = random.randint(48, 62)
 
-        self.player = Player(all_sprites, self, posx, posy, 64, boyorgirl)
+        self.player = Player(all_sprites, self, posx - 0.5, posy - 0.5, 64, boyorgirl)
         self.camera = Camera()
 
         self.mobs = []
@@ -360,7 +363,6 @@ class Game:  # Инициализация игры
     def world_cutting(self):
         self.timer_cut += self.dt
         if self.timer_cut > self.cell_timer:
-            tiles_group.empty()  # очистка всех спрайтов, чтобы не нагружать память
             self.step += 1
 
             for i in range(self.world.w):
@@ -424,9 +426,6 @@ class Game:  # Инициализация игры
         inventory_group.update()
         entities_group.update()
 
-        cursor = load_image("cursor.png")
-        cursor = pg.transform.scale(cursor, (64, 64))
-
         # Кнопки паузы
         continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
         continue_rect = continue_txt.get_rect().move(60, 100)
@@ -436,7 +435,6 @@ class Game:  # Инициализация игры
 
         while self.running:
             screen.fill((0, 0, 0))
-
             if not self.pause:
                 pg.mouse.set_visible(False)
                 self.dt = self.clock.tick(self.FPS) / 1000
@@ -472,19 +470,52 @@ class Game:  # Инициализация игры
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        if continue_rect.collidepoint(event.pos):
-                            self.pause = False
+                        if self.pause:
+                            if continue_rect.collidepoint(event.pos):
+                                self.pause = False
 
-                        if quit_rect.collidepoint(event.pos):
-                            self.running = False
+                            if quit_rect.collidepoint(event.pos):
+                                self.running = False
 
                 if event.type == pg.KEYDOWN:
                     if not self.pause:
                         if event.key == pg.K_ESCAPE:
                             self.pause = True
+
                         if event.key == pg.K_a or event.key == pg.K_w \
                                 or event.key == pg.K_s or event.key == pg.K_d:
                             self.player_run()
+
+                        if event.key == pg.K_SPACE:
+                            ifdestroy = False
+                            x = int((self.player.rect.x + 32) / 4096 * 64)
+                            y = int((self.player.rect.y + 32) / 4096 * 64)
+
+                            if self.world.entities[y][x - 1]:
+                                self.world.entities[y][x - 1] = 0
+                                ifdestroy = True
+
+                            if self.world.entities[y][x + 1]:
+                                self.world.entities[y][x + 1] = 0
+                                ifdestroy = True
+
+                            if self.world.entities[y + 1][x]:
+                                self.world.entities[y + 1][x] = 0
+                                ifdestroy = True
+
+                            if self.world.entities[y - 1][x]:
+                                self.world.entities[y - 1][x] = 0
+                                ifdestroy = True
+
+                            if self.world.entities[y][x]:
+                                self.world.entities[y][x] = 0
+                                ifdestroy = True
+
+                            if ifdestroy:
+                                self.world.render()
+                                entities_destroy.play()
+                                entities_group.update()
+                                ifdestroy = False
 
                 if event.type == pg.KEYUP:
                     if not self.pause:
@@ -505,12 +536,6 @@ class Game:  # Инициализация игры
                 all_sprites.update()
 
                 inventory_group.draw(screen)
-
-                cursorx = int(self.mousepos[0])
-                cursory = int(self.mousepos[1])
-
-                screen.blit(cursor, (cursorx, cursory))
-
             pg.display.flip()
         open_Menu()
 
@@ -546,13 +571,14 @@ class TileMap:
             self.board[i][-1] = -1
 
     def render(self):
+        tiles_group.empty()
+        entities_group.empty()
         for i in range(self.w):
             for j in range(self.h):
                 if self.board[j][i] == -1:
                     Tile('empty', i, j)
 
                     if self.entities[j][i] != 0:
-                        self.entities[j][i].get_out(Tile('empty', i, j))
                         self.entities[j][i] = 0
 
                 if self.board[j][i] == 0:
@@ -560,25 +586,35 @@ class TileMap:
                     if not self.entities_enabled:
                         b = random.randint(0, 100)
                         if b < 40:
-                            self.entities[j][i] = Entity('green', i, j)
+                            self.entities[j][i] = 1
                         elif 45 > b >= 40:
-                            self.entities[j][i] = Entity('flowers', i, j)
+                            self.entities[j][i] = 2
                         elif 60 > b >= 50:
-                            self.entities[j][i] = Entity('bush', i, j)
+                            self.entities[j][i] = 3
 
                 if self.board[j][i] == 1:
                     Tile('sand', i, j)
                     if not self.entities_enabled:
                         b = random.randint(0, 100)
                         if b < 4:
-                            self.entities[j][i] = Entity('rock', i, j)
+                            self.entities[j][i] = 4
 
                 if self.board[j][i] == 2:
                     Tile('stone', i, j)
                     if not self.entities_enabled:
                         b = random.randint(0, 100)
                         if b < 11:
-                            self.entities[j][i] = Entity('rock', i, j)
+                            self.entities[j][i] = 4
+
+                if self.entities[j][i] == 1:
+                    Entity('green', i, j)
+                if self.entities[j][i] == 2:
+                    Entity('flowers', i, j)
+                if self.entities[j][i] == 3:
+                    Entity('bush', i, j)
+                if self.entities[j][i] == 4:
+                    Entity('rock', i, j)
+
         self.entities_enabled = True
 
     def get_click(self, mouse_pos):
@@ -648,7 +684,6 @@ class Entity(pg.sprite.Sprite):
     def get_event(self, event):
         if self.rect.collidepoint(event.pos):
             self.kill()
-            return 1
 
     def get_out(self, tile):
         if self.rect.collidepoint(tile.rect.topleft):
