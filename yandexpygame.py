@@ -288,6 +288,12 @@ class Game:  # Инициализация игры
         posx = 0
         posy = 0
 
+        self.gold = 0
+        self.silver_sword = 0
+        self.is_gold_sword = random.randint(0, 100)
+        self.is_silver_sword = random.randint(0, 100)
+        self.gold_sword = 0
+
         quarter = random.randint(1, 4)
 
         if quarter == 1:
@@ -422,10 +428,20 @@ class Game:  # Инициализация игры
 
     def append_drop(self, x, y):
         b = random.randint(0, 100)
-        if b == 0:
-            self.drop.append(Drop("gold", self.player, x, y))
-        if b == 100:
-            self.drop.append(Drop("silver_sword", self.player, x, y))
+        if self.is_gold_sword < 50:
+            if b < 30 and self.gold < 2:
+                self.drop.append(Drop("gold", self.player, x, y))
+                self.gold += 1
+
+        if self.is_gold_sword >= 50:
+            if b >= 70 and self.gold_sword < 1:
+                self.drop.append(Drop("gold_sword", self.player, x, y))
+                self.gold_sword += 1
+
+        if self.is_silver_sword >= 50:
+            if b == 100 and self.silver_sword < 1:
+                self.drop.append(Drop("silver_sword", self.player, x, y))
+                self.silver_sword += 1
 
     def run(self):
         self.world.render()
@@ -506,7 +522,8 @@ class Game:  # Инициализация игры
                             del self.drop[self.tmplist[i]]
 
                     self.tmplist.clear()
-                    print(self.inventory.inv)
+
+                    print(self.inventory.inv, self.is_silver_sword, self.is_gold_sword)
                     # Сверху, очистки блок
 
                     if not self.pause:
@@ -866,10 +883,24 @@ class Inventory:
         for i in range(self.w):
             if self.inv[0][i] == 0:
                 Inventory_Tile('empty', i)
+
             if self.inv[0][i] == "gold":
                 Inventory_Tile('gold', i)
+
             if self.inv[0][i] == "silver_sword":
                 Inventory_Tile('silver_sword', i)
+
+            if self.inv[0][i] == "gold_sword":
+                Inventory_Tile('gold_sword', i)
+
+            if self.inv[0][i] == "meat":
+                Inventory_Tile('meat', i)
+
+            if self.inv[0][i] == "eyes":
+                Inventory_Tile('eyes', i)
+
+            if self.inv[0][i] == "meat_block":
+                Inventory_Tile('meat_block', i)
 
         self.element1 = start_menu_text.render(str(self.inv[1][0]), 0, (255, 255, 255))
         self.element2 = start_menu_text.render(str(self.inv[1][1]), 0, (255, 255, 255))
