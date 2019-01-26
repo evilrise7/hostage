@@ -36,6 +36,11 @@ world_cut_sound.set_volume(7.0)
 entities_destroy = pg.mixer.Sound("sounds\pick.wav")
 entities_destroy.set_volume(0.4)
 
+hit_sound = pg.mixer.Sound("sounds\hit.wav")
+hit_sound.set_volume(0.5)
+
+cow_died = pg.mixer.Sound("sounds\cow_died.wav")
+
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('sprites', name)
@@ -399,32 +404,32 @@ class Game:  # Инициализация игры
         for i in range(len(self.mobs)):
             # Если животное касается границ, то оно отлетает
             if self.mobs[i].rect.x < 64 * self.step:
-                self.mobs[i].vx += 10
+                self.mobs[i].vx += 8
             if self.mobs[i].rect.x > 64 * (65 - self.step):
-                self.mobs[i].vx -= 10
+                self.mobs[i].vx -= 8
             if self.mobs[i].rect.y < 64 * self.step:
-                self.mobs[i].vy += 10
+                self.mobs[i].vy += 8
             if self.mobs[i].rect.y > 64 * (65 - self.step):
-                self.mobs[i].vy -= 10
+                self.mobs[i].vy -= 8
 
         for i in range(len(self.mobs)):
             for j in range(len(self.mobs)):
                 if self.mobs[i] != self.mobs[j]:
                     # Если животное касается других, то оно отлетает
                     if self.mobs[i].rect.collidepoint(self.mobs[j].rect.topleft):
-                        if self.mobs[i].rect.x + 64 < self.mobs[j].rect.x:
+                        if self.mobs[i].rect.x + 32 < self.mobs[j].rect.x:
                             self.mobs[i].vy += 5
                             self.mobs[j].vy -= 5
 
-                        if self.mobs[i].rect.x + 64 > self.mobs[j].rect.x:
+                        if self.mobs[i].rect.x + 32 > self.mobs[j].rect.x:
                             self.mobs[i].vy -= 5
                             self.mobs[j].vy += 5
 
-                        if self.mobs[i].rect.y + 64 < self.mobs[j].rect.y:
+                        if self.mobs[i].rect.y + 32 < self.mobs[j].rect.y:
                             self.mobs[i].vy += 5
                             self.mobs[j].vy -= 5
 
-                        if self.mobs[i].rect.y + 64 > self.mobs[j].rect.y:
+                        if self.mobs[i].rect.y + 32 > self.mobs[j].rect.y:
                             self.mobs[i].vy -= 5
                             self.mobs[j].vy += 5
 
@@ -444,6 +449,35 @@ class Game:  # Инициализация игры
             if b == 100 and self.silver_sword < 1:
                 self.drop.append(Drop("silver_sword", self.player, x, y))
                 self.silver_sword += 1
+
+    def cow_and_player(self):
+        self.tmpmobs = []
+        for i in range(len(self.mobs)):
+            if self.mobs[i].rect.colliderect(self.player.rect):
+                if self.tool == "axe":
+                    self.mobs[i].hp -= 2
+                    hit_sound.play()
+                else:
+                    self.mobs[i].hp -= 1
+                    hit_sound.play()
+
+                if self.mobs[i].check_hp():
+                    cow_died.play()
+                    self.mobs[i].kill()
+                    drop_group.update()
+                    if self.tool == "axe":
+                        self.drop.append(Drop("meat", self.player, int((self.player.rect.x + 32) / 4096 * 64)
+                                              , int((self.player.rect.y + 32) / 4096 * 64)))
+                    else:
+                        self.drop.append(Drop("eyes", self.player, int((self.player.rect.x + 32) / 4096 * 64)
+                                              , int((self.player.rect.y + 32) / 4096 * 64)))
+                    self.tmpmobs.append(i)
+
+        if self.tmpmobs:
+            for i in range(len(self.tmpmobs)):
+                del self.mobs[self.tmpmobs[i]]
+
+        self.tmpmobs.clear()
 
     def run(self):
         self.world.render()
@@ -517,8 +551,6 @@ class Game:  # Инициализация игры
                             del self.drop[self.tmplist[i]]
 
                     self.tmplist.clear()
-
-                    print(self.inventory.inv, self.is_silver_sword, self.is_gold_sword)
                     # Сверху, очистки блок
 
                     if not self.pause:
@@ -573,6 +605,9 @@ class Game:  # Инициализация игры
                             else:
                                 self.tool = "axe"
 
+                        if event.key == pg.K_k:
+                            self.cow_and_player()
+
                 if event.type == pg.KEYUP:
                     if not self.pause:
                         if event.key == pg.K_a or event.key == pg.K_w \
@@ -586,7 +621,6 @@ class Game:  # Инициализация игры
                 screen.blit(quit_txt, (60, 160))
 
             if not self.pause:
-                print(self.player.rect.x % 640, self.player.rect.y % 512)
                 self.check_cows()
 
                 animal_group.update()
@@ -997,6 +1031,12 @@ class Cow(pg.sprite.Sprite):
         self.y = y * cell_size
 
         self.movement(random.randint(0, 4))
+
+        self.hp = 10
+
+    def check_hp(self):
+        if self.hp < 1:
+            return 1
 
     def comparestates(self):
         if self.tmpstate != self.state:
