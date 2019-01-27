@@ -62,7 +62,10 @@ tile_images = {"grass": load_image('grass.png'),
 entity_images = {"green": load_image('green.png'),
                  "flowers": load_image('flowers.png'),
                  "rock": load_image('rock.png'),
-                 "bush": load_image('bush.png')}
+                 "bush": load_image('bush.png'),
+                 "meat": load_image('meat_entity.png'),
+                 "gold_sword": load_image('gold_sword_entity.png'),
+                 "silver_sword": load_image('silver_sword_entity.png')}
 
 inventory_images = {"empty": load_image('empty.png'),
                     "meat_block": load_image('meat_block_inv.png'),
@@ -77,6 +80,9 @@ drop_images = {"meat": load_image('meat.png'),
                "eyes": load_image('eyes.png'),
                "gold_sword": load_image('gold_sword.png'),
                "silver_sword": load_image('silver_sword.png')}
+
+input_score = open("score.txt", "r")
+output_score = open("score.txt", "w")
 
 
 class Menu:
@@ -271,11 +277,34 @@ class Start_Menu:
 
 
 class Game_Over:
+    def __init__(self):
+        self.running = True
+
+    def run(self):
+        while self.running:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    quit()
+                    self.running = False
+
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.running = False
+
+            screen.fill((0, 0, 0))
+            screen.blit(start_menu_text.render("Game Over", 0, (255, 0, 0)), (200, 200))
+            pg.display.flip()
+        open_Menu()
+
+
+class Win:
     def __init__(self, score):
         self.score = score
 
     def run(self):
         self.running = True
+        output_score.write(str(self.score))
+        output_score.close()
         while self.running:
 
             for event in pg.event.get():
@@ -288,8 +317,8 @@ class Game_Over:
                         self.running = False
 
             screen.fill((0, 0, 0))
-            screen.blit(start_menu_text.render("Game Over", 0, (255, 0, 0)), (200, 200))
-            screen.blit(menu_text.render("Your Score:", 0, (255, 255, 255)), (225, 250))
+            screen.blit(start_menu_text.render("You win!", 0, (0, 255, 0)), (200, 200))
+            screen.blit(menu_text.render("Your time is", 0, (255, 255, 255)), (225, 250))
             screen.blit(menu_text.render(str(self.score), 0, (255, 255, 255)), (250, 290))
             pg.display.flip()
         open_Menu()
@@ -358,6 +387,8 @@ class Game:  # Инициализация игры
             self.cell_timer = 7.5
         if self.difficult == "hardcore":
             self.cell_timer = 3.75
+
+        self.current_cursor_pos = 0
 
     def clear_tiles(self):
         entities_group.empty()
@@ -473,6 +504,14 @@ class Game:  # Инициализация игры
                 self.drop.append(Drop("silver_sword", self.player, x, y))
                 self.silver_sword += 1
 
+    def append_drop_block(self, x, y, i):
+        if i == 5:
+            self.drop.append(Drop("meat_block", self.player, x, y))
+        if i == 6:
+            self.drop.append(Drop("gold_sword", self.player, x, y))
+        if i == 7:
+            self.drop.append(Drop("silver_sword", self.player, x, y))
+
     def cow_and_player(self):
         self.tmpmobs = []
         for i in range(len(self.mobs)):
@@ -502,6 +541,45 @@ class Game:  # Инициализация игры
 
         self.tmpmobs.clear()
 
+    def craft_checking(self):
+        for i in range(self.inventory.w):
+            if self.inventory.inv[0][i] == "meat" or self.inventory.inv[0][i] == "eyes":
+                if self.current_cursor_pos == i:
+                    if self.inventory.check_craft_meat():
+                        self.craft.craft_type = 0
+            if self.inventory.inv[0][i] == "gold":
+                if self.current_cursor_pos == i:
+                    if self.inventory.check_craft_gold():
+                        self.craft.craft_type = 1
+
+    def drop_clean(self):
+        if self.drop:
+            for i in range(len(self.drop)):
+                if self.drop[i].get_event() == 1:
+                    self.drop[i].kill()
+                    self.inventory.append(self.drop[i].type)
+                    self.tmplist.append(i)
+
+        if self.tmplist:
+            for i in range(len(self.tmplist)):
+                del self.drop[self.tmplist[i]]
+
+        self.tmplist.clear()
+
+    def put_block(self, block):
+        b = 0
+        index1 = 0
+        for i in range(self.inventory.w):
+            if self.inventory.inv[0][i] == block and \
+                    self.inventory.inv[1][i] > 0:
+                b += 1
+                index1 = i
+        if b:
+            self.inventory.inv[1][index1] -= 1
+            if self.inventory.inv[1][index1] == 0:
+                self.inventory.invtmp.remove(self.inventory.inv[0][index1])
+                self.inventory.inv[0][index1] = 0
+
     def run(self):
         # Загружаю мир и инвентарь
         self.world.render()
@@ -528,8 +606,6 @@ class Game:  # Инициализация игры
 
         self.cursor = load_image("cursor.png")
         self.cursor = pg.transform.scale(self.cursor, (72, 72))
-
-        current_cursor_pos = 0
         while self.running:
             screen.fill((0, 0, 0))
             if not self.pause:
@@ -543,16 +619,7 @@ class Game:  # Инициализация игры
 
                 # Кравт отображение
                 self.craft.craft_type = -1
-                for i in range(self.inventory.w):
-                    if self.inventory.inv[0][i] == "meat" or self.inventory.inv[0][i] == "eyes":
-                        if current_cursor_pos == i:
-                            if self.inventory.check_craft_meat():
-                                self.craft.craft_type = 0
-                    if self.inventory.inv[0][i] == "gold":
-                        if current_cursor_pos == i:
-                            if self.inventory.check_craft_gold():
-                                self.craft.craft_type = 1
-
+                self.craft_checking()
                 self.craft.render()
 
             for event in pg.event.get():
@@ -583,18 +650,7 @@ class Game:  # Инициализация игры
 
                 if event.type == pg.KEYDOWN:
                     # Очистка дропа, если касается игрок.
-                    if self.drop:
-                        for i in range(len(self.drop)):
-                            if self.drop[i].get_event() == 1:
-                                self.drop[i].kill()
-                                self.inventory.append(self.drop[i].type)
-                                self.tmplist.append(i)
-
-                    if self.tmplist:
-                        for i in range(len(self.tmplist)):
-                            del self.drop[self.tmplist[i]]
-
-                    self.tmplist.clear()
+                    self.drop_clean()
                     # Сверху, очистки блок
 
                     if not self.pause:
@@ -611,37 +667,168 @@ class Game:  # Инициализация игры
                             x = int((self.player.rect.x + 32) / 4096 * 64)
                             y = int((self.player.rect.y + 32) / 4096 * 64)
 
-                            if self.world.entities[y][x - 1]:
+                            # Влево
+                            if 0 < self.world.entities[y][x - 1] < 5:
                                 self.world.entities[y][x - 1] = 0
                                 self.append_drop(x - 1, y)
                                 ifdestroy = True
 
-                            if self.world.entities[y][x + 1]:
+                            if self.world.entities[y][x - 1] == 5:
+                                self.world.entities[y][x - 1] = 0
+                                self.append_drop_block(x - 1, y, 5)
+                                ifdestroy = True
+
+                            if self.world.entities[y][x - 1] == 6:
+                                self.world.entities[y][x - 1] = 0
+                                self.append_drop_block(x - 1, y, 6)
+                                ifdestroy = True
+
+                            if self.world.entities[y][x - 1] == 7:
+                                self.world.entities[y][x - 1] = 0
+                                self.append_drop_block(x - 1, y, 7)
+                                ifdestroy = True
+
+                            # Вправо
+                            if 0 < self.world.entities[y][x + 1] < 5:
                                 self.world.entities[y][x + 1] = 0
                                 self.append_drop(x + 1, y)
                                 ifdestroy = True
 
-                            if self.world.entities[y + 1][x]:
+                            if self.world.entities[y][x + 1] == 5:
+                                self.world.entities[y][x + 1] = 0
+                                self.append_drop_block(x + 1, y, 5)
+                                ifdestroy = True
+
+                            if self.world.entities[y][x + 1] == 6:
+                                self.world.entities[y][x + 1] = 0
+                                self.append_drop_block(x + 1, y, 6)
+                                ifdestroy = True
+
+                            if self.world.entities[y][x + 1] == 7:
+                                self.world.entities[y][x + 1] = 0
+                                self.append_drop_block(x + 1, y, 7)
+                                ifdestroy = True
+
+                            # Снизу
+                            if 0 < self.world.entities[y + 1][x] < 5:
                                 self.world.entities[y + 1][x] = 0
                                 self.append_drop(x, y + 1)
                                 ifdestroy = True
 
-                            if self.world.entities[y - 1][x]:
+                            if self.world.entities[y + 1][x] == 5:
+                                self.world.entities[y + 1][x] = 0
+                                self.append_drop_block(x, y + 1, 5)
+                                ifdestroy = True
+
+                            if self.world.entities[y + 1][x] == 6:
+                                self.world.entities[y + 1][x] = 0
+                                self.append_drop_block(x, y + 1, 6)
+                                ifdestroy = True
+
+                            if self.world.entities[y + 1][x] == 7:
+                                self.world.entities[y + 1][x] = 0
+                                self.append_drop_block(x, y + 1, 7)
+                                ifdestroy = True
+
+                            # Сверху
+                            if 0 < self.world.entities[y - 1][x] < 5:
                                 self.world.entities[y - 1][x] = 0
                                 self.append_drop(x, y - 1)
                                 ifdestroy = True
 
-                            if self.world.entities[y][x]:
+                            if self.world.entities[y - 1][x] == 5:
+                                self.world.entities[y - 1][x] = 0
+                                self.append_drop_block(x, y - 1, 5)
+                                ifdestroy = True
+
+                            if self.world.entities[y - 1][x] == 6:
+                                self.world.entities[y - 1][x] = 0
+                                self.append_drop_block(x, y - 1, 6)
+                                ifdestroy = True
+
+                            if self.world.entities[y - 1][x] == 7:
+                                self.world.entities[y - 1][x] = 0
+                                self.append_drop_block(x, y - 1, 7)
+                                ifdestroy = True
+
+                            # По центру
+                            if 0 < self.world.entities[y][x] < 5:
                                 self.world.entities[y][x] = 0
                                 self.append_drop(x, y)
                                 ifdestroy = True
 
+                            if self.world.entities[y][x] == 5:
+                                self.world.entities[y][x] = 0
+                                self.append_drop_block(x, y, 5)
+                                ifdestroy = True
+
+                            if self.world.entities[y][x] == 6:
+                                self.world.entities[y][x] = 0
+                                self.append_drop_block(x, y, 6)
+                                ifdestroy = True
+
+                            if self.world.entities[y][x] == 7:
+                                self.world.entities[y][x] = 0
+                                self.append_drop_block(x, y, 7)
+                                ifdestroy = True
+
+                            # Само уничтожение
                             if ifdestroy:
                                 self.world.render()
                                 entities_destroy.play()
                                 entities_group.update()
                                 drop_group.update()
                                 ifdestroy = False
+
+                        if event.key == pg.K_m:
+                            x = int((self.player.rect.x + 32) / 4096 * 64)
+                            y = int((self.player.rect.y + 32) / 4096 * 64)
+
+                            for i in range(self.inventory.w):
+                                if self.inventory.inv[0][i] == "meat_block":
+                                    if self.current_cursor_pos == i:
+                                        if self.player.mirrored:
+                                            if self.world.entities[y][x + 1] < 5:
+                                                self.world.entities[y][x + 1] = 5
+                                                self.world.render()
+                                                entities_group.update()
+                                                self.put_block("meat_block")
+                                        else:
+                                            if self.world.entities[y][x - 1] < 5:
+                                                self.world.entities[y][x - 1] = 5
+                                                self.world.render()
+                                                entities_group.update()
+                                                self.put_block("meat_block")
+
+                                if self.inventory.inv[0][i] == "gold_sword":
+                                    if self.current_cursor_pos == i:
+                                        if self.player.mirrored:
+                                            if self.world.entities[y][x + 1] < 5:
+                                                self.world.entities[y][x + 1] = 6
+                                                self.world.render()
+                                                entities_group.update()
+                                                self.put_block("gold_sword")
+                                        else:
+                                            if self.world.entities[y][x - 1] < 5:
+                                                self.world.entities[y][x - 1] = 6
+                                                self.world.render()
+                                                entities_group.update()
+                                                self.put_block("gold_sword")
+
+                                if self.inventory.inv[0][i] == "silver_sword":
+                                    if self.current_cursor_pos == i:
+                                        if self.player.mirrored:
+                                            if self.world.entities[y][x + 1] < 5:
+                                                self.world.entities[y][x + 1] = 7
+                                                self.world.render()
+                                                entities_group.update()
+                                                self.put_block("silver_sword")
+                                        else:
+                                            if self.world.entities[y][x - 1] < 5:
+                                                self.world.entities[y][x - 1] = 7
+                                                self.world.render()
+                                                entities_group.update()
+                                                self.put_block("silver_sword")
 
                         if event.key == pg.K_o:
                             if self.tool == "axe":
@@ -691,10 +878,10 @@ class Game:  # Инициализация игры
                                     self.inventory.append("gold_sword")
 
                         if event.key == pg.K_p:
-                            if current_cursor_pos < self.inventory.w - 1:
-                                current_cursor_pos += 1
+                            if self.current_cursor_pos < self.inventory.w - 1:
+                                self.current_cursor_pos += 1
                             else:
-                                current_cursor_pos = 0
+                                self.current_cursor_pos = 0
 
                 if event.type == pg.KEYUP:
                     if not self.pause:
@@ -710,9 +897,22 @@ class Game:  # Инициализация игры
 
             if not self.pause:
                 if self.step == 33:
-                    Game_Over(str(datetime.timedelta(seconds=int(self.time_in_game)))).run()
+                    Game_Over().run()
                 self.check_cows()
 
+                for j in range(self.world.w):
+                    for i in range(self.world.w):
+                        if j != 63 and i != 63:
+                            if self.world.entities[j][i] == 5 and \
+                                    self.world.entities[j][i + 1] == 5 and \
+                                    self.world.entities[j][i + 2] == 5 and \
+                                    self.world.entities[j + 1][i] == 5 and \
+                                    self.world.entities[j + 1][i + 1] == 6 and \
+                                    self.world.entities[j + 1][i + 2] == 5 and \
+                                    self.world.entities[j + 2][i] == 5 and \
+                                    self.world.entities[j + 2][i + 1] == 5 and \
+                                    self.world.entities[j + 2][i + 2] == 5:
+                                Win(1).run()
                 animal_group.update()
                 all_sprites.update()
 
@@ -726,7 +926,7 @@ class Game:  # Инициализация игры
                 screen.blit(start_menu_text.render(str(self.tool),
                                                    0, (255, 255, 255)), (64, 72))
                 screen.blit(axe_scissors, (64, 0))
-                screen.blit(self.cursor, (72 * current_cursor_pos + 240, 0))
+                screen.blit(self.cursor, (72 * self.current_cursor_pos + 240, 0))
 
             pg.display.flip()
         open_Menu()
@@ -806,6 +1006,13 @@ class TileMap:
                     Entity('bush', i, j)
                 if self.entities[j][i] == 4:
                     Entity('rock', i, j)
+                if self.entities[j][i] == 5:
+                    Entity('meat', i, j)
+                if self.entities[j][i] == 6:
+                    Entity('gold_sword', i, j)
+                if self.entities[j][i] == 7:
+                    Entity('silver_sword', i, j)
+
 
         self.entities_enabled = True
 
