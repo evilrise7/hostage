@@ -27,6 +27,9 @@ animal_group = pg.sprite.Group()
 click_sound = pg.mixer.Sound("sounds\walk.wav")
 click_sound.set_volume(0.4)
 
+pick_up_sound = pg.mixer.Sound("sounds\pickup.wav")
+pick_up_sound.set_volume(1)
+
 world_cut_sound = pg.mixer.Sound("sounds\cut.wav")
 world_cut_sound.set_volume(7.0)
 
@@ -79,10 +82,13 @@ drop_images = {"meat": load_image('meat.png'),
                "gold": load_image('gold.png'),
                "eyes": load_image('eyes.png'),
                "gold_sword": load_image('gold_sword.png'),
-               "silver_sword": load_image('silver_sword.png')}
+               "silver_sword": load_image('silver_sword.png'),
+               "meat_block": load_image('meat_block.png')}
 
 input_score = open("score.txt", "r")
 output_score = open("score.txt", "w")
+
+psycho_level = 0
 
 
 class Menu:
@@ -134,8 +140,7 @@ class Menu:
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if start_game_rect.collidepoint(event.pos):
                         click_sound.play()
-                        begin_game = Start_Menu()
-                        begin_game.run()
+                        Level().run()
 
                     if record_rect.collidepoint(event.pos):
                         print(1)
@@ -160,6 +165,48 @@ class Menu:
             pg.display.flip()
         pg.quit()
         sys.exit()
+
+
+class Level:
+    def __init__(self):
+        self.level = psycho_level
+
+    def run(self):
+        self.running = True
+        self.level_terrain = load_image("level1.png")
+        self.level_secret = load_image("level2.png")
+
+        self.level_terrain_rect = self.level_terrain.get_rect().move(0, 120)
+        self.level_secret_rect = self.level_secret.get_rect().move(320, 120)
+
+        while self.running:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    quit()
+                    self.running = False
+
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.running = False
+
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    if self.level_terrain_rect.collidepoint(event.pos):
+                        click_sound.play()
+                        Start_Menu().run()
+                    if self.level_secret_rect.collidepoint(event.pos) and self.level == 1:
+                        click_sound.play()
+                        self.running = False
+
+            screen.fill((0, 0, 0))
+            screen.blit(start_menu_text.render("CHOOSE YOUR LEVEL!",
+                                                0, (255, 255, 255)), (110, 20))
+
+            screen.blit(self.level_terrain, (0, 120))
+            if self.level:
+                screen.blit(self.level_secret, (320, 120))
+
+            pg.display.flip()
+        open_Menu()
 
 
 class Start_Menu:
@@ -912,7 +959,21 @@ class Game:  # Инициализация игры
                                     self.world.entities[j + 2][i] == 5 and \
                                     self.world.entities[j + 2][i + 1] == 5 and \
                                     self.world.entities[j + 2][i + 2] == 5:
-                                Win(1).run()
+                                Win(str(datetime.timedelta(seconds=int(self.time_in_game)))).run()
+
+                            if self.world.entities[j][i] == 5 and \
+                                    self.world.entities[j][i + 1] == 5 and \
+                                    self.world.entities[j][i + 2] == 5 and \
+                                    self.world.entities[j + 1][i] == 5 and \
+                                    self.world.entities[j + 1][i + 1] == 7 and \
+                                    self.world.entities[j + 1][i + 2] == 5 and \
+                                    self.world.entities[j + 2][i] == 5 and \
+                                    self.world.entities[j + 2][i + 1] == 5 and \
+                                    self.world.entities[j + 2][i + 2] == 5:
+                                global psycho_level
+                                psycho_level = 1
+                                Game_Over().run()
+
                 animal_group.update()
                 all_sprites.update()
 
@@ -1324,6 +1385,7 @@ class Drop(pg.sprite.Sprite):
     def get_event(self):
         if self.rect.collidepoint((self.player.rect.x + 32),
                                   (self.player.rect.y + 32)):
+            pick_up_sound.play()
             return True
 
 
