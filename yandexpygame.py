@@ -197,7 +197,7 @@ class Level:
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if self.level_terrain_rect.collidepoint(event.pos):
                         click_sound.play()
-                        Start_Menu().run()
+                        Tutorial_Terrain().run()
                     if self.level_secret_rect.collidepoint(event.pos) and self.level == 1:
                         click_sound.play()
                         self.running = False
@@ -210,6 +210,43 @@ class Level:
             if self.level:
                 screen.blit(self.level_secret, (320, 120))
 
+            pg.display.flip()
+        open_Menu()
+
+
+class Tutorial_Terrain:
+    def __init__(self):
+        self.running = True
+        self.slide = 1
+        self.show = False
+
+    def run(self):
+        while self.running:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    quit()
+                    self.running = False
+
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    if self.slide < 7:
+                        self.slide += 1
+                    else:
+                        self.slide = 1
+                    self.show = True
+                    click_sound.play()
+
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.running = False
+                    else:
+                        click_sound.play()
+                        Start_Menu().run()
+
+            screen.fill((0, 0, 0))
+            screen.blit(load_image("t" + str(self.slide) + ".png"), (0, 0))
+            if not self.show:
+                screen.blit(start_menu_text.render("Click to slide",
+                                                   0, (255, 255, 255)), (20, 20))
             pg.display.flip()
         open_Menu()
 
