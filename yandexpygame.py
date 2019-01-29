@@ -62,6 +62,11 @@ tile_images = {"grass": load_image('grass.png'),
                "stone": load_image('stone.png'),
                "empty": load_image('empty_tile.png')}
 
+secret_images = {"bath": load_image('bath.png'),
+                 "shower": load_image('shower.png'),
+                 "right_eye": load_image('eye2.png'),
+                 "left_eye": load_image('eye1.png')}
+
 entity_images = {"green": load_image('green.png'),
                  "flowers": load_image('flowers.png'),
                  "rock": load_image('rock.png'),
@@ -476,7 +481,6 @@ class Game:  # Инициализация игры
         self.clock = pg.time.Clock()
         self.timer_cut = 0
         self.time_in_game = 0
-        self.mousepos = (0, 0)
         self.difficult = difficult
         self.step = 1
 
@@ -631,26 +635,26 @@ class Game:  # Инициализация игры
         b = random.randint(0, 100)
         if self.is_gold_sword < 50:
             if b < 30 and self.gold < 2:
-                self.drop.append(Drop("gold", self.player, x, y))
+                self.drop.append(Drop("gold", self.player, x, y, self))
                 self.gold += 1
 
         if self.is_gold_sword >= 50:
             if b >= 70 and self.gold_sword < 1:
-                self.drop.append(Drop("gold_sword", self.player, x, y))
+                self.drop.append(Drop("gold_sword", self.player, x, y, self))
                 self.gold_sword += 1
 
         if self.is_silver_sword >= 50:
             if b == 100 and self.silver_sword < 1:
-                self.drop.append(Drop("silver_sword", self.player, x, y))
+                self.drop.append(Drop("silver_sword", self.player, x, y, self))
                 self.silver_sword += 1
 
     def append_drop_block(self, x, y, i):
         if i == 5:
-            self.drop.append(Drop("meat_block", self.player, x, y))
+            self.drop.append(Drop("meat_block", self.player, x, y, self))
         if i == 6:
-            self.drop.append(Drop("gold_sword", self.player, x, y))
+            self.drop.append(Drop("gold_sword", self.player, x, y, self))
         if i == 7:
-            self.drop.append(Drop("silver_sword", self.player, x, y))
+            self.drop.append(Drop("silver_sword", self.player, x, y, self))
 
     def cow_and_player(self):
         self.tmpmobs = []
@@ -669,10 +673,10 @@ class Game:  # Инициализация игры
                     drop_group.update()
                     if self.tool == "axe":
                         self.drop.append(Drop("meat", self.player, int((self.player.rect.x + 32) / 4096 * 64)
-                                              , int((self.player.rect.y + 32) / 4096 * 64)))
+                                              , int((self.player.rect.y + 32) / 4096 * 64), self))
                     else:
                         self.drop.append(Drop("eyes", self.player, int((self.player.rect.x + 32) / 4096 * 64)
-                                              , int((self.player.rect.y + 32) / 4096 * 64)))
+                                              , int((self.player.rect.y + 32) / 4096 * 64), self))
                     self.tmpmobs.append(i)
 
         if self.tmpmobs:
@@ -695,6 +699,10 @@ class Game:  # Инициализация игры
     def drop_clean(self):
         if self.drop:
             for i in range(len(self.drop)):
+                if self.drop[i].check_drop_pos() == 1:
+                    self.drop[i].kill()
+                    self.tmplist.remove(i)
+
                 if self.drop[i].get_event() == 1:
                     self.drop[i].kill()
                     self.inventory.append(self.drop[i].type)
@@ -1463,7 +1471,7 @@ class Inventory_Tile(pg.sprite.Sprite):
 
 
 class Drop(pg.sprite.Sprite):
-    def __init__(self, types, player, x, y):
+    def __init__(self, types, player, x, y, game):
         super().__init__(drop_group)
         self.type = types
         self.cell_size = 64
@@ -1474,12 +1482,26 @@ class Drop(pg.sprite.Sprite):
         self.rect = self.image.get_rect().move(self.cell_size * x,
                                                self.cell_size * y)
         self.player = player
+        self.step = game.step
 
     def get_event(self):
         if self.rect.collidepoint((self.player.rect.x + 32),
                                   (self.player.rect.y + 32)):
             pick_up_sound.play()
             return True
+
+    def check_drop_pos(self):
+        if self.rect.x < 64 * self.step:
+            return 1
+
+        if self.rect.x > 64 * (65 - self.step):
+            return 1
+
+        if self.rect.y < 64 * self.step:
+            return 1
+
+        if self.rect.y > 64 * (65 - self.step):
+            return 1
 
 
 class Cow(pg.sprite.Sprite):
@@ -1600,6 +1622,130 @@ class Cow(pg.sprite.Sprite):
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
         self.rect.y = self.y
+
+
+class Secret_Level:
+    def __init__(self):
+        self.dt = 0
+        self.FPS = 100
+        self.clock = pg.time.Clock()
+        self.children = 0
+        self.drop = []
+        self.inventory = Inventory()
+        self.camera = Camera()
+
+    def update_tiles(self):
+        for sprite in tiles_group:
+            screen.blit(sprite.image, self.camera.apply(sprite))
+        for sprite in all_sprites:
+            screen.blit(sprite.image, self.camera.apply(sprite))
+        for sprite in drop_group:
+            screen.blit(sprite.image, self.camera.apply(sprite))
+
+    def drop_clean(self):
+        if self.drop:
+            for i in range(len(self.drop)):
+                if self.drop[i].get_event() == 1:
+                    self.drop[i].kill()
+                    self.inventory.append(self.drop[i].type)
+                    self.tmplist.append(i)
+
+        if self.tmplist:
+            for i in range(len(self.tmplist)):
+                del self.drop[self.tmplist[i]]
+
+        self.tmplist.clear()
+
+    def run(self):
+        # Загружаю мир и инвентарь
+        self.world.render()
+        self.inventory.render()
+        self.running = True
+
+        # Обновляю группы спрайтов
+        all_sprites.update()
+        inventory_group.update()
+        drop_group.update()
+
+        # Кнопки паузы
+        continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
+        continue_rect = continue_txt.get_rect().move(60, 100)
+
+        quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
+        quit_rect = quit_txt.get_rect().move(60, 160)
+
+        # Лист, чтобы прослеживать уже добавленные предметы
+        self.tmplist = []
+
+        self.cursor = load_image("cursor.png")
+        self.cursor = pg.transform.scale(self.cursor, (72, 72))
+        while self.running:
+            screen.fill((0, 0, 0))
+            if not self.pause:
+                pg.mouse.set_visible(False)
+                self.dt = self.clock.tick(self.FPS) / 1000
+
+                self.camera.update(self.player)
+                self.update_tiles()
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    quit()
+                    self.running = False
+
+                if event.type == pg.MOUSEMOTION:
+                    if self.pause:
+                        if continue_rect.collidepoint(event.pos):
+                            continue_txt = start_menu_text.render("Continue", 0, (255, 255, 255))
+                        else:
+                            continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
+
+                        if quit_rect.collidepoint(event.pos):
+                            quit_txt = start_menu_text.render("Quit", 0, (255, 255, 255))
+                        else:
+                            quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
+
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        if self.pause:
+                            if continue_rect.collidepoint(event.pos):
+                                self.pause = False
+
+                            if quit_rect.collidepoint(event.pos):
+                                self.running = False
+
+                if event.type == pg.KEYDOWN:
+                    self.drop_clean()
+                    if not self.pause:
+                        if event.key == pg.K_p:
+                            if self.current_cursor_pos < self.inventory.w - 1:
+                                self.current_cursor_pos += 1
+                            else:
+                                self.current_cursor_pos = 0
+
+                if event.type == pg.KEYUP:
+                    if not self.pause:
+                        if event.key == pg.K_a or event.key == pg.K_w \
+                                or event.key == pg.K_s or event.key == pg.K_d:
+                            self.player_stay()
+
+            if self.pause:
+                pg.mouse.set_visible(True)
+
+                screen.blit(continue_txt, (60, 100))
+                screen.blit(quit_txt, (60, 160))
+
+            if not self.pause:
+                if self.children == 5:
+                    Drowned_Children().run()
+                all_sprites.update()
+                self.inventory.render()
+                inventory_group.update()
+                inventory_group.draw(screen)
+                screen.blit(self.cursor, (72 * self.current_cursor_pos + 240, 0))
+
+            pg.display.flip()
+        open_Menu()
 
 
 def open_Menu():
