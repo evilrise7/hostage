@@ -114,6 +114,11 @@ class Menu:
                 if event.type == pg.QUIT:
                     self.running = False
 
+                # secret lvl
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_u:
+                        Drowned_Children().run()
+
                 if event.type == pg.K_ESCAPE:
                     self.running = False
                 if event.type == pg.MOUSEMOTION:
@@ -339,7 +344,10 @@ class Game_Over:
                         self.running = False
 
             screen.fill((0, 0, 0))
-            screen.blit(start_menu_text.render("Game Over", 0, (255, 0, 0)), (200, 200))
+            if psycho_level:
+                screen.blit(start_menu_text.render("Children.", 0, (255, 0, 0)), (200, 200))
+            else:
+                screen.blit(start_menu_text.render("Game Over", 0, (255, 0, 0)), (200, 200))
             pg.display.flip()
         open_Menu()
 
@@ -367,6 +375,54 @@ class Win:
             screen.blit(start_menu_text.render("You win!", 0, (0, 255, 0)), (200, 200))
             screen.blit(menu_text.render("Your time is", 0, (255, 255, 255)), (225, 250))
             screen.blit(menu_text.render(str(self.score), 0, (255, 255, 255)), (250, 290))
+            pg.display.flip()
+        open_Menu()
+
+
+class Drowned_Children:
+    def __init__(self):
+        self.running = True
+
+    def run(self):
+        child_D = load_image("child_D.png")
+        child_D = pg.transform.scale(child_D, (144, 144))
+
+        child_R = load_image("child_R.png")
+        child_R = pg.transform.scale(child_R, (144, 144))
+
+        child_O = load_image("child_O.png")
+        child_O = pg.transform.scale(child_O, (144, 144))
+
+        child_W = load_image("child_W.png")
+        child_W = pg.transform.scale(child_W, (144, 144))
+
+        child_N = load_image("child_N.png")
+        child_N = pg.transform.scale(child_N, (144, 144))
+        while self.running:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    quit()
+                    self.running = False
+
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.running = False
+
+            screen.fill((0, 0, 0))
+            screen.blit(child_D, (60, 70))
+            screen.blit(child_R, (156, 70))
+            screen.blit(child_O, (252, 70))
+            screen.blit(child_W, (348, 70))
+            screen.blit(child_N, (444, 70))
+
+            screen.blit(start_menu_text.render("Congratulations!", 0,
+                                               (255, 255, 255)), (130, 230))
+            screen.blit(start_menu_text.render("You drowned your own", 0,
+                                               (255, 255, 255)), (40, 270))
+            screen.blit(start_menu_text.render("children.", 0,
+                                               (255, 255, 255)), (220, 310))
+            screen.blit(start_menu_text.render("You're the best mother!", 0,
+                                               (255, 255, 255)), (20, 350))
             pg.display.flip()
         open_Menu()
 
