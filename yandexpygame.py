@@ -5,18 +5,23 @@ import random
 import datetime
 
 
+# Инициализация PyGame(назвал, как pg, чтобы укоротить и не получить PEP8)
 pg.init()
 pg.mixer.init()
 
+# Название и иконка игры
 pg.display.set_caption("Hell Obtained Sensible Tiny And Geniusly Emmy.")
 pg.display.set_icon(pg.image.load("sprites\icon.png"))
 
+# Разрешение экрана и залипание клавиш(для передвижения игрока в игре)
 screen = pg.display.set_mode((640, 512))
 pg.key.set_repeat(500, 10)
 
+# Два варианта текста, которых достаточно для оформления меню
 menu_text = pg.font.Font('cyr.ttf', 36)
 start_menu_text = pg.font.Font('cyr.ttf', 48)
 
+# Группы спрайтов. Я оформил их отдельно, чтобы изменять поле игры
 all_sprites = pg.sprite.Group()
 tiles_group = pg.sprite.Group()
 entities_group = pg.sprite.Group()
@@ -24,24 +29,31 @@ inventory_group = pg.sprite.Group()
 drop_group = pg.sprite.Group()
 animal_group = pg.sprite.Group()
 
+# Звук клика в меню
 click_sound = pg.mixer.Sound("sounds\walk.wav")
 click_sound.set_volume(0.4)
 
+# Звук подбора вещей в игре
 pick_up_sound = pg.mixer.Sound("sounds\pickup.wav")
 pick_up_sound.set_volume(1)
 
+# Звук пожирания мира
 world_cut_sound = pg.mixer.Sound("sounds\cut.wav")
 world_cut_sound.set_volume(7.0)
 
+# Звук уничтожения природных объектов(трава, камень, цветки и кусты)
 entities_destroy = pg.mixer.Sound("sounds\pick.wav")
 entities_destroy.set_volume(0.4)
 
+# Звук удара коровки
 hit_sound = pg.mixer.Sound("sounds\hit.wav")
 hit_sound.set_volume(0.5)
 
+# Звук "быстрого убийства"
 cow_died = pg.mixer.Sound("sounds\cow_died.wav")
 
 
+# Функция для загрузки спрайтов
 def load_image(name, colorkey=None):
     fullname = os.path.join('sprites', name)
     try:
@@ -57,16 +69,19 @@ def load_image(name, colorkey=None):
     return image
 
 
+# Словарь спрайтов игрового мира
 tile_images = {"grass": load_image('grass.png'),
                "sand": load_image('sand.png'),
                "stone": load_image('stone.png'),
                "empty": load_image('empty_tile.png')}
 
+# Словарь спрайтов секретного уровня
 secret_images = {"bath": load_image('bath.png'),
                  "shower": load_image('shower.png'),
                  "right_eye": load_image('eye2.png'),
                  "left_eye": load_image('eye1.png')}
 
+# Словарь спрайтов природных объектов
 entity_images = {"green": load_image('green.png'),
                  "flowers": load_image('flowers.png'),
                  "rock": load_image('rock.png'),
@@ -75,6 +90,7 @@ entity_images = {"green": load_image('green.png'),
                  "gold_sword": load_image('gold_sword_entity.png'),
                  "silver_sword": load_image('silver_sword_entity.png')}
 
+# Словарь спрайтов инвентаря
 inventory_images = {"empty": load_image('empty.png'),
                     "meat_block": load_image('meat_block_inv.png'),
                     "eyes": load_image('eyes_inv.png'),
@@ -83,6 +99,7 @@ inventory_images = {"empty": load_image('empty.png'),
                     "gold_sword": load_image('gold_sword_inv.png'),
                     "silver_sword": load_image('silver_sword_inv.png')}
 
+# Словарь спрайтов выпавших вещей
 drop_images = {"meat": load_image('meat.png'),
                "gold": load_image('gold.png'),
                "eyes": load_image('eyes.png'),
@@ -90,18 +107,22 @@ drop_images = {"meat": load_image('meat.png'),
                "silver_sword": load_image('silver_sword.png'),
                "meat_block": load_image('meat_block.png')}
 
+# Файлы загрузки результатов
 input_score = open("score.txt", "r")
 output_score = open("score.txt", "w")
 
+# Переменная отвечает за запуск секретного уровня
 psycho_level = 0
 
 
+# Класс меню
 class Menu:
     def __init__(self):
-        pg.mouse.set_visible(True)
+        pg.mouse.set_visible(True)  # Сделать мышь видимой
 
     def run(self):
         self.running = True
+        # Начать игру, Результаты, Настройки и Выход
         start_game = menu_text.render("Start Game", 0, (100, 100, 100))
         start_game_rect = start_game.get_rect().move(80, 150)
 
@@ -117,15 +138,18 @@ class Menu:
         while self.running:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
-                    self.running = False
+                    self.running = False  # Выход из игры, при закрытии окна
 
-                # secret lvl
+                # Тест секретного уровня
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_u:
                         Drowned_Children().run()
 
+                # Выход из игры нажатием ESC
                 if event.type == pg.K_ESCAPE:
                     self.running = False
+
+                # "Анимированные" тексты кнопок меню
                 if event.type == pg.MOUSEMOTION:
                     if start_game_rect.collidepoint(event.pos):
                         start_game = menu_text.render("Start Game", 0, (255, 255, 255))
@@ -149,6 +173,7 @@ class Menu:
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if start_game_rect.collidepoint(event.pos):
+                        # Запуск меню выбора уровней
                         click_sound.play()
                         Level().run()
 
@@ -159,20 +184,25 @@ class Menu:
                         print(2)
                         click_sound.play()
                     if exit_rect.collidepoint(event.pos):
+                        # Выход из игры
                         click_sound.play()
                         self.running = False
 
+            # Логотип игры
             image = load_image("logo.png")
             image = pg.transform.scale(image, (144, 196))
 
+            # Обновления кадра, путем заливки
             screen.fill((0, 0, 0))
+            # Добавить спрайты на экран
             screen.blit(image, (400, 150))
             screen.blit(start_game, (80, 150))
             screen.blit(record_txt, (80, 200))
             screen.blit(settings_txt, (80, 250))
             screen.blit(exit_txt, (80, 300))
-
+            # Обновление кадра
             pg.display.flip()
+        # Выход из игры
         pg.quit()
         sys.exit()
 
@@ -1169,29 +1199,41 @@ class TileMap:
         self.entities_enabled = True
 
 
+# Камера
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
         self.dx = 0
         self.dy = 0
+        # Маска камеры прямоугольником
         self.camera = pg.Rect(0, 0, 4224, 4224)
 
-        self.width = 4224
-        self.height = 4224
+        self.width = 4224   # Размер всей карты по длине
+        self.height = 4224  # Размер всей карты по ширине
 
-    # сдвинуть объект obj на смещение камеры
+    # сдвинуть спрайты на смещение камеры
     def apply(self, obj):
         return obj.rect.move(self.camera.topleft)
 
     def update(self, target):
+        # Положение камеры берет разность середины экрана
+        # и положения игрока вместе с его размерами
         x = -target.rect.x - target.rect.w + int(640 // 2)
         y = -target.rect.y - target.rect.h + int(512 // 2)
+
+        '''
+        Ограничения(экстремумы) координат, нужны для того
+        чтобы, когда игрок за пределами середины, он мог
+        cвободно перемещатся, без смещения остальных
+        cпрайтов.
+        '''
 
         x = min(0, x)  # ограничение на левый край
         y = min(0, y)  # ограничение на верхний край
         x = max(-(self.width - 640), x)  # на правый край
         y = max(-(self.height - 512), y)  # на нижний
 
+        # Камера получает новую маску
         self.camera = pg.Rect(x, y, self.width, self.height)
 
 
@@ -1226,42 +1268,51 @@ class Entity(pg.sprite.Sprite):
             self.kill()
 
 
+# Игрок
 class Player(pg.sprite.Sprite):
     def __init__(self, group, game, x, y, cell_size, gender):
         super().__init__(group)
-        self.game = game
-        self.state = "stay"
-        self.tmpstate = False
-        self.frames = []
-        self.cur_frame = 0
-        self.mirrored = False
-        self.gender = gender
+        self.game = game    # Параметр текущей игра
+        self.state = "stay"  # Изначально положение героя
+        self.tmpstate = False  # Буферное положение героя
+        self.frames = []    # Лист кадров
+        self.cur_frame = 0  # Текущий кадр
+        self.mirrored = False   # Параметр отзеркаливания героя
+        self.gender = gender    # Параметр пола персонажа
 
+        # Если выбрали Мартина, то соответсвующий спрайт
         if self.gender == "male":
             self.cut_sheet(load_image("p_sheet.png"))
+        # Если выбрали Марго, то соответствующий спрайт
         else:
             self.cut_sheet(load_image("f_sheet.png"))
 
+        # Картинка береться из листа
         self.image = self.frames[self.cur_frame]
+
+        # Параметр размера спрайта
         self.size = self.image.get_size()
 
+        # Маска спрайта из прямоугольника
         self.rect = self.image.get_rect()
         self.cell_size = cell_size
 
+        # Скорость героя
         self.speed = 150
 
-        self.vx = 0
-        self.vy = 0
+        self.vx = 0  # Скорость героя на проекцию Ox
+        self.vy = 0  # Скорость героя на проекцию Oy
 
-        self.timer = 0
-        self.timer_animation = 0
-        self.x = x * cell_size
-        self.y = y * cell_size
+        self.timer = 0  # Таймер смены кадров анимации
+        self.timer_animation = 0  # Таймер смены анимации
+        self.x = x * cell_size  # Координаты героя на ось Ox
+        self.y = y * cell_size  # Координаты героя на ось Oy
 
-    def comparestates(self):
+    def comparestates(self):    # Функция сравнения состояний
+        # Если текущее состояние не равно буферному
         if self.tmpstate != self.state:
-            self.frames.clear()
-            self.tmpstate = self.state
+            self.frames.clear()  # Очистка листа
+            self.tmpstate = self.state  # Замена буферного текущим
 
     def cut_sheet(self, sheet):
         self.comparestates()
@@ -1491,120 +1542,134 @@ class Drop(pg.sprite.Sprite):
             return 1
 
 
+# Коровка
 class Cow(pg.sprite.Sprite):
     def __init__(self, group, game, x, y, cell_size):
         super().__init__(group)
-        self.game = game
-        self.state = "stay"
-        self.tmpstate = False
+        self.game = game    # привязанный параметр текущей игры
+        self.state = "stay"  # текущее положение, для анимации
+        self.tmpstate = False  # буферное положение, для переключения анимации
 
-        self.frames = []
-        self.cur_frame = 0
+        self.frames = []    # Лист кадров
+        self.cur_frame = 0  # Текущий кадр
 
-        self.cut_sheet(load_image("c_sheet.png"))
+        self.cut_sheet(load_image("c_sheet.png"))   # Полотно спрайтов коровки
 
-        self.image = self.frames[self.cur_frame]
-        self.size = self.image.get_size()
+        self.image = self.frames[self.cur_frame]    # Картинка из листа
+        self.size = self.image.get_size()   # Получить размер картинки
 
-        self.rect = self.image.get_rect()
-        self.cell_size = cell_size
+        self.rect = self.image.get_rect()   # Получить маску из прямоугольника
+        self.cell_size = cell_size  # Текущий размер клетки в игровом мире
 
-        self.speed = 100
+        self.speed = 100    # Скорость коровки
 
-        self.vx = 0
-        self.vy = 0
+        self.vx = 0  # Скорость коровки на проекцию Ox
+        self.vy = 0  # Скорость коровки на проекцию Oy
 
-        self.timer = 0
-        self.timer_choose_animation = 0
+        self.timer = 0  # Таймер переключения анимаций
+        self.timer_choose_animation = 0  # Таймер свободного движения коровки
 
-        self.x = x * cell_size
-        self.y = y * cell_size
+        self.x = x * cell_size  # Изначальное положение коровки на ось Ox
+        self.y = y * cell_size  # Изначальное положение коровки на ось Oy
 
-        self.movement(random.randint(0, 4))
+        self.movement(random.randint(0, 4))  # Случайный выбор движения
 
-        self.hp = 10
+        self.hp = 10    # Жизнь коровки
 
     def check_hp(self):
-        if self.hp < 1:
-            return 1
+        if self.hp < 1:  # Если коровка уже не в Индии
+            return 1  # То минус коровка(когда у коровки 0 жизней)
 
-    def comparestates(self):
+    def comparestates(self):    # Сравнение анимаций
         if self.tmpstate != self.state:
-            self.frames.clear()
-            self.tmpstate = self.state
+            self.frames.clear()  # Очистка листа спрайтов
+            self.tmpstate = self.state  # Буферное приравнивается к текущему
 
     def cut_sheet(self, sheet):
-        self.comparestates()
-
+        self.comparestates()    # Вызвать функцию состояний анимации
+        # Получить маску прямоугольника из картинки
         self.rect = pg.Rect(0, 0, sheet.get_width() // 2,
                             sheet.get_height() // 2)
 
-        if self.state == "run":
+        if self.state == "run":  # Если текущее состояние коровки == бег
             for j in range(1, 2):
                 for i in range(2):
                     frame_location = (self.rect.w * i, self.rect.h * j)
-                    self.frames.append(sheet.subsurface(pg.Rect(frame_location,
-                                                                self.rect.size)))
+                    self.frames.append(sheet.subsurface(
+                        pg.Rect(frame_location, self.rect.size)))
 
-        if self.state == "stay":
+        if self.state == "stay":  # Если текущее состояние коровки == стоять
             for j in range(0, 1):
                 for i in range(2):
                     frame_location = (self.rect.w * i, self.rect.h * j)
-                    self.frames.append(sheet.subsurface(pg.Rect(frame_location,
-                                                                self.rect.size)))
-
+                    self.frames.append(sheet.subsurface(
+                        pg.Rect(frame_location, self.rect.size)))
+        # Оставлять в листе только 2 спрайта(т.к. в полотне было 2 ячейки)
         self.frames = self.frames[0:2]
 
     def movement(self, b):
-        self.vx = 0
-        self.vy = 0
+        self.vx = 0  # Скорость коровки на проекцию Ox
+        self.vy = 0  # Скорость коровки на проекцию Oy
 
+        # Если коровка стоит
         if b == 0:
             self.vx = 0
             self.vy = 0
             self.state = "stay"
             self.cut_sheet(load_image("c_sheet.png"))
 
+        # Если коровка идет налево
         if b == 1:
             self.vx = -self.speed
 
+        # Если коровка идет направо
         if b == 2:
             self.vx = self.speed
 
+        # Если коровка идет вверх
         if b == 3:
             self.vy = -self.speed
 
+        # Если коровка идет вниз
         if b == 4:
             self.vy = self.speed
 
+        # Если коровка не стоит, то проигрывается анимация бега
         if b > 0:
             self.state = "run"
             self.cut_sheet(load_image("c_sheet.png"))
 
     def update(self):
+        # Интервал между кадрами
         self.timer += self.game.dt
+        # Интервал изменения направления
         self.timer_choose_animation += self.game.dt
 
+        # Если текущее состояние == стоять, то интервал = 1 секунды
         if self.state == "stay":
             if self.timer > 1:
                 self.cur_frame = (self.cur_frame + 1) % len(self.frames)
                 self.image = self.frames[self.cur_frame]
                 self.timer = 0
 
+        # Если текущее состояние == бег, то интервал = 0.3 секунды
         if self.state == "run":
             if self.timer > 0.3:
                 self.cur_frame = (self.cur_frame + 1) % len(self.frames)
                 self.image = self.frames[self.cur_frame]
                 self.timer = 0
 
+        # Изменение размеров картинки
         self.image = pg.transform.scale(self.image,
                                         (int(self.size[0] * 4),
                                          int(self.size[1] * 4)))
 
+        # Каждые 2 секунды коровка будет двигатся по-разному
         if self.timer_choose_animation > 2:
             self.timer_choose_animation = 0
             self.movement(random.randint(0, 4))
 
+        # Двигать коровку под FPS
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
@@ -1735,14 +1800,17 @@ class Secret_Level:
         open_Menu()
 
 
+# Функция открытия меню
 def open_Menu():
     men = Menu()
     men.run()
 
 
+# Функция выхода из игры, чтобы не было ошибок
 def quit():
     pg.quit()
     sys.exit()
 
 
+# Сам запуск всей игры
 open_Menu()
