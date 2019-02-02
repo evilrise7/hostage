@@ -260,65 +260,84 @@ class Level:
         open_Menu()
 
 
+# Туториал для игрового мира
 class Tutorial_Terrain:
     def __init__(self):
         self.running = True
-        self.slide = 1
+        self.slide = 1  # Текущий слайд туториала
+        # Если игрок не нажимает на слайд
+        # надпись "click" остается
         self.show = False
 
     def run(self):
         while self.running:
             for event in pg.event.get():
+                # Закрытие окна
                 if event.type == pg.QUIT:
                     quit()
                     self.running = False
 
                 if event.type == pg.MOUSEBUTTONDOWN:
+                    # Переключение слайдов
                     if self.slide < 7:
+                        # Конечный слайд заменяется на первый
                         self.slide += 1
                     else:
                         self.slide = 1
+                    # Убрать надпись "Click"
                     self.show = True
                     click_sound.play()
 
                 if event.type == pg.KEYDOWN:
+                    # Перейти в меню
                     if event.key == pg.K_ESCAPE:
                         self.running = False
+                    # любая другая кнопка, активирует меню персонажа
                     else:
                         click_sound.play()
                         Start_Menu().run()
-
+            # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
+            # Добавление слайдов
             screen.blit(load_image("t" + str(self.slide) + ".png"), (0, 0))
             if not self.show:
                 screen.blit(start_menu_text.render("Click to slide",
                                                    0, (255, 255, 255)), (20, 20))
+            # Обновление кадра
             pg.display.flip()
+        # Переход в меню
         open_Menu()
 
 
+# Меню выбора персонажей
 class Start_Menu:
     def __init__(self):
-        self.gender = ""
-        self.difficult = ""
+        self.gender = ""    # Половая принадлежность
+        self.difficult = ""  # Сложность игры
 
     def run(self):
         self.running = True
+        # Персонаж Мартин и его прямоугольная маска
         martin_txt = start_menu_text.render("MARTIN", 0, (100, 100, 100))
         martin_rect = martin_txt.get_rect().move(100, 280)
 
+        # Персонаж Марго и ее прямоугольная маска
         margo_txt = start_menu_text.render("MARGO", 0, (100, 100, 100))
         margo_rect = margo_txt.get_rect().move(400, 280)
 
+        # Легкая сложность
         easy_txt = start_menu_text.render("EASY", 0, (100, 100, 100))
         easy_rect = easy_txt.get_rect().move(60, 400)
 
+        # Средняя сложность
         medium_txt = start_menu_text.render("MEDIUM", 0, (100, 100, 100))
         medium_rect = medium_txt.get_rect().move(240, 400)
 
+        # Высокая сложность
         hardcore_txt = start_menu_text.render("HARD", 0, (100, 100, 100))
         hardcore_rect = hardcore_txt.get_rect().move(470, 400)
 
+        # Картинки персонажей и текст " Выбрать персонажа "
         martin_image = load_image("p.png")
         martin_image = pg.transform.scale(martin_image, (196, 196))
 
@@ -329,6 +348,7 @@ class Start_Menu:
                                                 0, (255, 255, 255))
 
         while self.running:
+            # Изначально все тексты имеют прозрачность 50 - 60 %
             easy_txt = start_menu_text.render("EASY", 0, (100, 100, 100))
             medium_txt = start_menu_text.render("MEDIUM", 0, (100, 100, 100))
             hardcore_txt = start_menu_text.render("HARD", 0, (100, 100, 100))
@@ -337,27 +357,33 @@ class Start_Menu:
             margo_txt = start_menu_text.render("MARGO", 0, (100, 100, 100))
 
             for event in pg.event.get():
+                # Закрыть окно
                 if event.type == pg.QUIT:
                     quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
+                    # Перейти в меню
                     if event.key == pg.K_ESCAPE:
                         self.running = False
 
+                    # Запуск игры
                     if event.key == pg.K_SPACE:
                         if self.difficult != "" and self.gender != "":
                             Game(difficult=self.difficult, boyorgirl=self.gender).run()
 
                 if event.type == pg.MOUSEBUTTONDOWN:
+                    # Выбор Мартина
                     if martin_rect.collidepoint(event.pos):
                         self.gender = "male"
                         click_sound.play()
+                    # Выбор Марго
                     if margo_rect.collidepoint(event.pos):
                         self.gender = "female"
                         click_sound.play()
 
                     if self.gender:
+                        # Если игрок выбрал персонажа, то сложности активны
                         if easy_rect.collidepoint(event.pos):
                             self.difficult = "easy"
                             click_sound.play()
@@ -367,15 +393,17 @@ class Start_Menu:
                         if hardcore_rect.collidepoint(event.pos):
                             self.difficult = "hardcore"
                             click_sound.play()
-
+            # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
 
+            # Анимация текстов Персонажей
             if self.gender == "female":
                 margo_txt = start_menu_text.render("MARGO", 0, (255, 255, 255))
 
             if self.gender == "male":
                 martin_txt = start_menu_text.render("MARTIN", 0, (255, 255, 255))
 
+            # Анимация сложностей
             if self.difficult == "easy":
                 easy_txt = start_menu_text.render("EASY", 0, (255, 255, 255))
 
@@ -385,6 +413,7 @@ class Start_Menu:
             if self.difficult == "hardcore":
                 hardcore_txt = start_menu_text.render("HARD", 0, (255, 255, 255))
 
+            # Добавление объектов на экран
             screen.blit(martin_image, (70, 80))
             screen.blit(margo_image, (370, 80))
 
@@ -395,22 +424,27 @@ class Start_Menu:
             screen.blit(medium_txt, (240, 400))
             screen.blit(hardcore_txt, (470, 400))
 
+            # Если игрок выбрал все, что ему нужно
             if self.difficult != "" and self.gender != "":
                 press_to_start = start_menu_text.render("PRESS SPACE TO BEGIN!",
                                                         0, (255, 255, 255))
                 screen.blit(press_to_start, (70, 20))
 
+            # Если игрок выбрал персонажа
             elif self.difficult == "" and self.gender:
                 press_to_start = start_menu_text.render("CHOOSE DIFFUCLTY!",
                                                         0, (255, 255, 255))
                 screen.blit(press_to_start, (130, 20))
+            # Если игрок только зашел в игру и ничего не выбрал
             elif self.difficult == "" and self.gender == "":
                 screen.blit(press_to_start, (110, 20))
-
+            # Обновление кадра
             pg.display.flip()
+        # Переход в меню
         open_Menu()
 
 
+# Окно проигрыша
 class Game_Over:
     def __init__(self):
         self.running = True
@@ -418,20 +452,29 @@ class Game_Over:
     def run(self):
         while self.running:
             for event in pg.event.get():
+                # Закрытие окна
                 if event.type == pg.QUIT:
                     quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
+                    # Перейти в меню
                     if event.key == pg.K_ESCAPE:
                         self.running = False
 
+            # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             if psycho_level:
-                screen.blit(start_menu_text.render("Children.", 0, (255, 0, 0)), (200, 200))
+                # Если открыт секретный уровень, будет изменен текст проигрыша
+                screen.blit(start_menu_text.render("Children.", 0, (255, 0, 0)),
+                            (200, 200))
             else:
-                screen.blit(start_menu_text.render("Game Over", 0, (255, 0, 0)), (200, 200))
+                # Если не открыт секретный уровень, будет изменен текст проигрыша
+                screen.blit(start_menu_text.render("Game Over", 0, (255, 0, 0)),
+                            (200, 200))
+            # Обновление кадра
             pg.display.flip()
+        # Перейти в меню
         open_Menu()
 
 
