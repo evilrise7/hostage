@@ -207,45 +207,56 @@ class Menu:
         sys.exit()
 
 
+# Выбор уровней
 class Level:
     def __init__(self):
-        self.level = psycho_level
+        self.level = psycho_level  # Проверка секретного уровня
 
     def run(self):
         self.running = True
+        # Загрузка спрайтов выбора уровней
         self.level_terrain = load_image("level1.png")
         self.level_secret = load_image("level2.png")
 
+        # Маски спрайтов из прямоугольника для клика
         self.level_terrain_rect = self.level_terrain.get_rect().move(0, 120)
         self.level_secret_rect = self.level_secret.get_rect().move(320, 120)
 
         while self.running:
             for event in pg.event.get():
+                # Закрытие экрана
                 if event.type == pg.QUIT:
                     quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
+                    # Перейти в меню
                     if event.key == pg.K_ESCAPE:
                         self.running = False
 
                 if event.type == pg.MOUSEBUTTONDOWN:
+                    # Запустить обычный игровой мир
                     if self.level_terrain_rect.collidepoint(event.pos):
                         click_sound.play()
                         Tutorial_Terrain().run()
+                    # Запустить секретный уровень
                     if self.level_secret_rect.collidepoint(event.pos) and self.level == 1:
                         click_sound.play()
                         self.running = False
 
+            # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
+            # Добавление объектов на экран
             screen.blit(start_menu_text.render("CHOOSE YOUR LEVEL!",
                                                 0, (255, 255, 255)), (110, 20))
 
             screen.blit(self.level_terrain, (0, 120))
+            # Если секретный уровень открыт, добавить его выбор на экран
             if self.level:
                 screen.blit(self.level_secret, (320, 120))
-
+            # Обновление кадра
             pg.display.flip()
+        # Запуск меню
         open_Menu()
 
 
@@ -424,38 +435,48 @@ class Game_Over:
         open_Menu()
 
 
+# Выигрыш игры
 class Win:
     def __init__(self, score):
-        self.score = score
+        self.score = score  # Время прохождения игры
 
     def run(self):
         self.running = True
+        # Запись результата в текстовый документ
         output_score.write(str(self.score))
         output_score.close()
         while self.running:
 
             for event in pg.event.get():
+                # Закрытие окна
                 if event.type == pg.QUIT:
                     quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
+                    # Перейти в меню
                     if event.key == pg.K_ESCAPE:
                         self.running = False
 
+            # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
+            # Добавление объектов на экран
             screen.blit(start_menu_text.render("You win!", 0, (0, 255, 0)), (200, 200))
             screen.blit(menu_text.render("Your time is", 0, (255, 255, 255)), (225, 250))
             screen.blit(menu_text.render(str(self.score), 0, (255, 255, 255)), (250, 290))
+            # Обновление кадра
             pg.display.flip()
+        # Запуск меню, при выходе
         open_Menu()
 
 
+# Выигрыш секретного уровня
 class Drowned_Children:
     def __init__(self):
         self.running = True
 
     def run(self):
+        # Загрузка объектов
         child_D = load_image("child_D.png")
         child_D = pg.transform.scale(child_D, (144, 144))
 
@@ -472,15 +493,19 @@ class Drowned_Children:
         child_N = pg.transform.scale(child_N, (144, 144))
         while self.running:
             for event in pg.event.get():
+                # Закрытие окна
                 if event.type == pg.QUIT:
                     quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
+                    # Перейти в меню
                     if event.key == pg.K_ESCAPE:
                         self.running = False
 
+            # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
+            # Добавление объектов на экран
             screen.blit(child_D, (60, 70))
             screen.blit(child_R, (156, 70))
             screen.blit(child_O, (252, 70))
@@ -495,7 +520,9 @@ class Drowned_Children:
                                                (255, 255, 255)), (220, 310))
             screen.blit(start_menu_text.render("You're the best mother!", 0,
                                                (255, 255, 255)), (20, 350))
+            # Обновление кадра
             pg.display.flip()
+        # Запуск меню
         open_Menu()
 
 
@@ -1237,14 +1264,17 @@ class Camera:
         self.camera = pg.Rect(x, y, self.width, self.height)
 
 
+# Ячейка спрайта игрового поля
 class Tile(pg.sprite.Sprite):
     def __init__(self, types, x, y):
         super().__init__(tiles_group)
-        self.cell_size = 64
-        self.type = types
-        self.image = tile_images[types]
+        self.cell_size = 64  # Размер ячейки
+        self.type = types  # Тип ячейки, для загрузки соответсвующего спрайта
+        self.image = tile_images[types]  # Загрузка спрайта
+        # Изменение размеров ячейки
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
+        # Прямоугольная маска
         self.rect = self.image.get_rect().move(self.cell_size * x,
                                                self.cell_size * y)
 
