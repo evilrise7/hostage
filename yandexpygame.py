@@ -569,22 +569,25 @@ class Drowned_Children:
         open_Menu()
 
 
-class Game:  # Инициализация игры
+# Игровой мир (Уровень 1)
+class Game:
     def __init__(self, difficult="easy", boyorgirl="male"):
+        # Очистить все поле, при старте новой игры
         self.clear_tiles()
-
+        # Текущий инструмент == Топор
         self.tool = "axe"
-
+        # Пауза
         self.pause = False
-        self.dt = 0
-        self.FPS = 100
-        self.clock = pg.time.Clock()
-        self.timer_cut = 0
-        self.time_in_game = 0
-        self.difficult = difficult
-        self.step = 1
-
+        self.dt = 0  # Обновление времени внутри системы
+        self.FPS = 100  # Кадры в секунду для оптимизации
+        self.clock = pg.time.Clock()  # Часы внутренние
+        self.timer_cut = 0  # Время поедания мира
+        self.time_in_game = 0  # Игровое время прохождения
+        self.difficult = difficult  # Сложность игры
+        self.step = 1  # Пожирание N клеток границ
+        # Текущий игровой мир(карта)
         self.world = TileMap()
+        # Текущий инвентарь игрового мира
         self.inventory = Inventory()
 
         posx = 0
@@ -682,12 +685,12 @@ class Game:  # Инициализация игры
             self.step += 1
 
             for i in range(self.world.w):
-                self.world.board[self.step - 1][i] = -1
-                self.world.board[-self.step][i] = -1
+                self.world.world_array[self.step - 1][i] = -1
+                self.world.world_array[-self.step][i] = -1
 
             for i in range(self.world.h):
-                self.world.board[i][self.step - 1] = -1
-                self.world.board[i][-self.step] = -1
+                self.world.world_array[i][self.step - 1] = -1
+                self.world.world_array[i][-self.step] = -1
 
             self.world.render()
 
@@ -852,6 +855,7 @@ class Game:  # Инициализация игры
         # Лист, чтобы прослеживать уже добавленные предметы
         self.tmplist = []
 
+        # Загрузка курсора инвентаря
         self.cursor = load_image("cursor.png")
         self.cursor = pg.transform.scale(self.cursor, (72, 72))
         while self.running:
@@ -1073,16 +1077,20 @@ class Game:  # Инициализация игры
                                                 self.world.render()
                                                 entities_group.update()
                                                 self.put_block("silver_sword")
-
+                        # Смена инструмента
                         if event.key == pg.K_o:
+                            # Если был топор, станут ножницы
                             if self.tool == "axe":
                                 self.tool = "scissors"
+                            # И наоборот
                             else:
                                 self.tool = "axe"
 
+                        # Убийство коровы aka "Быстрое убийство"
                         if event.key == pg.K_k:
                             self.cow_and_player()
 
+                        # Создание вещей
                         if event.key == pg.K_c:
                             b = 0
                             index1 = 0
@@ -1121,26 +1129,41 @@ class Game:  # Инициализация игры
 
                                     self.inventory.append("gold_sword")
 
+                        # Изменение положения курсора в инвентаре
                         if event.key == pg.K_p:
+                            # Если курсор еще не в конце инветаря
                             if self.current_cursor_pos < self.inventory.w - 1:
                                 self.current_cursor_pos += 1
+                            # Если курсор уже на последней ячейке, то он переходит на первую
                             else:
-                                self.current_cursor_pos = 0
+                                self.current_cursor_pos = 0  # Сброс курсора
 
             if self.pause:
+                # Когда пауза, курсор и кнопки: Продолжить, Выйти - активированы
                 pg.mouse.set_visible(True)
-
-                screen.blit(continue_txt, (60, 100))
-                screen.blit(quit_txt, (60, 160))
+                # Добавление кнопок меню паузы на экран
+                screen.blit(continue_txt, (60, 100))  # Продолжить
+                screen.blit(quit_txt, (60, 160))  # Выйти
 
             if not self.pause:
+                # Если весь мир сожран, то игра завершается с проигрышем
                 if self.step == 33:
                     Game_Over().run()
+
+                # Проверка положения коров
                 self.check_cows()
 
+                # Проверка выигрыша или активации секретного уровня
                 for j in range(self.world.w):
                     for i in range(self.world.w):
                         if j != 63 and i != 63:
+                            '''
+                            Если тотем построен в виде:
+                            С С С
+                            С М С - где М - Золотой меч,
+                            С С С       С - Сухожилие,
+                            то игра завершается и игрок выигрывает
+                            '''
                             if self.world.entities[j][i] == 5 and \
                                     self.world.entities[j][i + 1] == 5 and \
                                     self.world.entities[j][i + 2] == 5 and \
@@ -1151,7 +1174,13 @@ class Game:  # Инициализация игры
                                     self.world.entities[j + 2][i + 1] == 5 and \
                                     self.world.entities[j + 2][i + 2] == 5:
                                 Win(str(datetime.timedelta(seconds=int(self.time_in_game)))).run()
-
+                            '''
+                            Если тотем построен в виде:
+                            С С С
+                            С S С - где S - Серебрянный меч,
+                            С С С       С - Сухожилие,
+                            то игра завершается и секретный уровень активирован
+                            '''
                             if self.world.entities[j][i] == 5 and \
                                     self.world.entities[j][i + 1] == 5 and \
                                     self.world.entities[j][i + 2] == 5 and \
@@ -1165,107 +1194,142 @@ class Game:  # Инициализация игры
                                 psycho_level = 1
                                 Game_Over().run()
 
+                # Обновить игрока и животных
                 animal_group.update()
                 all_sprites.update()
 
+                # Обновить инвентарь
                 self.inventory.render()
                 inventory_group.update()
                 inventory_group.draw(screen)
 
+                # Текущий инструмент в руках героя
                 axe_scissors = load_image(str(self.tool) + ".png")
                 axe_scissors = pg.transform.scale(axe_scissors, (72, 72))
-
+                # Добавление текущего инструмента в руках героя на экран
                 screen.blit(start_menu_text.render(str(self.tool),
                                                    0, (255, 255, 255)), (64, 72))
                 screen.blit(axe_scissors, (64, 0))
                 screen.blit(self.cursor, (72 * self.current_cursor_pos + 240, 0))
-
+            # Обновление кадра
             pg.display.flip()
+        # Запуск меню
         open_Menu()
 
 
+# Игровой мир (Карта)
 class TileMap:
     def __init__(self):
-        self.w = 66
-        self.h = 66
-        self.board = [[0] * self.w for _ in range(self.h)]
+        self.w = 66  # Длина мира
+        self.h = 66  # Ширина мира
+        # Карта поверхностей
+        self.world_array = [[0] * self.w for _ in range(self.h)]
+        # Карта природных объектов
         self.entities = [[0] * self.w for _ in range(self.h)]
-        self.generation()
-        self.cell_size = 64
+        self.generation()  # Генерация мира
+        self.cell_size = 64  # Размер клетки мира
+        '''
+        self.entities_enabled - флаг, отвечающий на единственную
+        генерацию природных объектов.
+        '''
         self.entities_enabled = False
 
-    def set_view(self, cell_size):
-        self.cell_size = cell_size
-
+    # Генерация мира
     def generation(self):
         for j in range(self.h):
             for i in range(self.w):
                 b = random.randint(0, 100)
+                '''
+                Генерация происходит по принципу
+                65% == Трава, Земля == 0
+                15% == Песок == 1
+                20% == Камень == 2
+                '''
                 if b < 65:
-                    self.board[j][i] = 0
+                    self.world_array[j][i] = 0
                 elif 65 <= b < 80:
-                    self.board[j][i] = 1
+                    self.world_array[j][i] = 1
                 else:
-                    self.board[j][i] = 2
+                    self.world_array[j][i] = 2
+        # Начертание границ по длине
         for i in range(self.w):
-            self.board[0][i] = -1
-            self.board[-1][i] = -1
+            self.world_array[0][i] = -1
+            self.world_array[-1][i] = -1
+
+        # Начертание границ по ширине
         for i in range(self.h):
-            self.board[i][0] = -1
-            self.board[i][-1] = -1
+            self.world_array[i][0] = -1
+            self.world_array[i][-1] = -1
 
     def render(self):
+        # Очистка групп спрайтов для разгрузки памяти
         tiles_group.empty()
         entities_group.empty()
+        # Заполнение спрайтами мира
         for i in range(self.w):
             for j in range(self.h):
-                if self.board[j][i] == -1:
+                # Границы мира
+                if self.world_array[j][i] == -1:
                     Tile('empty', i, j)
-
+                    # Природные объекты за границами - уничтожаются
                     if self.entities[j][i] != 0:
                         self.entities[j][i] = 0
 
-                if self.board[j][i] == 0:
+                # Трава
+                if self.world_array[j][i] == 0:
                     Tile('grass', i, j)
                     if not self.entities_enabled:
-                        b = random.randint(0, 100)
-                        if b < 40:
+                        entity = random.randint(0, 100)
+                        if entity < 40:
                             self.entities[j][i] = 1
-                        elif 45 > b >= 40:
+                        elif 45 > entity >= 40:
                             self.entities[j][i] = 2
-                        elif 60 > b >= 50:
+                        elif 60 > entity >= 50:
                             self.entities[j][i] = 3
-
-                if self.board[j][i] == 1:
+                # Песок
+                if self.world_array[j][i] == 1:
                     Tile('sand', i, j)
                     if not self.entities_enabled:
-                        b = random.randint(0, 100)
-                        if b < 4:
+                        entity = random.randint(0, 100)
+                        if entity < 4:
                             self.entities[j][i] = 4
-
-                if self.board[j][i] == 2:
+                # Камень
+                if self.world_array[j][i] == 2:
                     Tile('stone', i, j)
                     if not self.entities_enabled:
-                        b = random.randint(0, 100)
-                        if b < 11:
+                        entity = random.randint(0, 100)
+                        if entity < 11:
                             self.entities[j][i] = 4
-
+                '''
+                Если генерация мира не произведена
+                то природные объекты генерируются
+                по приницпу:
+                60% == Трава
+                20% == Песок
+                20% == Камень
+                '''
+                # Трава
                 if self.entities[j][i] == 1:
                     Entity('green', i, j)
+                # Цветы
                 if self.entities[j][i] == 2:
                     Entity('flowers', i, j)
+                # Кусты
                 if self.entities[j][i] == 3:
                     Entity('bush', i, j)
+                # Камень
                 if self.entities[j][i] == 4:
                     Entity('rock', i, j)
+                # Мясо
                 if self.entities[j][i] == 5:
                     Entity('meat', i, j)
+                # Золотой меч
                 if self.entities[j][i] == 6:
                     Entity('gold_sword', i, j)
+                # Серебрянный меч
                 if self.entities[j][i] == 7:
                     Entity('silver_sword', i, j)
-
-
+        # После первой генерации мира, больше нет права генерировать
         self.entities_enabled = True
 
 
@@ -1322,20 +1386,20 @@ class Tile(pg.sprite.Sprite):
                                                self.cell_size * y)
 
 
+# Природные объекты
 class Entity(pg.sprite.Sprite):
     def __init__(self, types, x, y):
         super().__init__(entities_group)
-        self.cell_size = 64
-        self.image = entity_images[types]
+        self.cell_size = 64  # Размер клетки
+        self.image = entity_images[types]   # Спрайт из словаря
+        # Изменение размеров изображения
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
+        # Маска спрайта из прямоугольника
         self.rect = self.image.get_rect().move(self.cell_size * x,
                                                self.cell_size * y)
 
-    def get_event(self, event):
-        if self.rect.collidepoint(event.pos):
-            self.kill()
-
+    # Уничтожение клетки, если что-то поставили
     def get_out(self, tile):
         if self.rect.collidepoint(tile.rect.topleft):
             self.kill()
@@ -1347,7 +1411,6 @@ class Player(pg.sprite.Sprite):
         super().__init__(group)
         self.game = game    # Параметр текущей игра
         self.state = "stay"  # Изначально положение героя
-        self.tmpstate = False  # Буферное положение героя
         self.frames = []    # Лист кадров
         self.cur_frame = 0  # Текущий кадр
         self.mirrored = False   # Параметр отзеркаливания героя
@@ -1381,18 +1444,11 @@ class Player(pg.sprite.Sprite):
         self.x = x * cell_size  # Координаты героя на ось Ox
         self.y = y * cell_size  # Координаты героя на ось Oy
 
-    def comparestates(self):    # Функция сравнения состояний
-        # Если текущее состояние не равно буферному
-        if self.tmpstate != self.state:
-            self.frames.clear()  # Очистка листа
-            self.tmpstate = self.state  # Замена буферного текущим
-
     def cut_sheet(self, sheet):
-        self.comparestates()
-        self.frames.clear()
+        self.frames.clear()  # Очистить лист для перезагрузки кадров
         self.rect = pg.Rect(0, 0, sheet.get_width() // 6,
                             sheet.get_height() // 2)
-
+        # Если состояние бега, то отрезаются спрайты бега
         if self.state == "run":
             for j in range(1, 2):
                 for i in range(6):
@@ -1400,8 +1456,8 @@ class Player(pg.sprite.Sprite):
                     self.frames.append(sheet.subsurface(pg.Rect(
                         frame_location, self.rect.size)))
 
-            self.frames = self.frames[0:6]
-
+            self.frames = self.frames[0:6]  # Отрезать 6 спрайтов бега
+        # Если состояние стойки, то отрезаются спрайты стойки
         if self.state == "stay":
             for j in range(0, 1):
                 for i in range(2):
@@ -1409,79 +1465,99 @@ class Player(pg.sprite.Sprite):
                     self.frames.append(sheet.subsurface(pg.Rect(
                         frame_location, self.rect.size)))
 
-            self.frames = self.frames[0:2]
+            self.frames = self.frames[0:2]  # Отрезать 2 спрайта бега
 
     def key_movement(self):
-        self.vx = 0
-        self.vy = 0
-        keys = pg.key.get_pressed()
-        self.timer_animation += self.game.dt
+        self.vx = 0  # Сброс скорости на проекцию Ox
+        self.vy = 0  # Сброс скорости на проекцию Oy
+        keys = pg.key.get_pressed()  # Отслеживать зажатые клавиши
+        self.timer_animation += self.game.dt  # Таймер между кадрами анимациями
+
+        # Если игрок не заходит за границы Oy
         if self.y > self.game.step * 64:
-            if keys[pg.K_w]:
-                if self.vx == 0:
-                    self.vy = -self.speed
+            if keys[pg.K_w]:    # Управление вверх
+                self.vy = -self.speed
+                # Смена кадра через 0.08 секунд
                 if self.timer_animation > 0.08:
-                    self.game.player_run()
-                    self.timer_animation = 0
-        else:
-            self.vy += 72
+                    self.game.player_run()  # Запуск анимации бега
+                    self.timer_animation = 0  # Сброс таймера
 
+        else:  # Если игрок за границами Oy
+            self.vy += 72  # Плавно отодвинуть игрока
+
+        # Если игрок не заходит за границы Oy
         if self.y < (65 - self.game.step) * 64:
-            if keys[pg.K_s]:
-                if self.vx == 0:
-                    self.vy = self.speed
+            if keys[pg.K_s]:  # Управление вниз
+                self.vy = self.speed
+                # Смена кадра через 0.08 секунд
                 if self.timer_animation > 0.08:
-                    self.game.player_run()
-                    self.timer_animation = 0
-        else:
-            self.vy -= 72
+                    self.game.player_run()  # Запуск анимации бега
+                    self.timer_animation = 0  # Сброс таймера
 
+        else:  # Если игрок за границами Oy
+            self.vy -= 72  # Плавно отодвинуть игрока
+
+        # Если игрок не заходит за границы Ox
         if self.x > self.game.step * 64:
-            if keys[pg.K_a]:
-                if self.vy == 0:
-                    self.vx = -self.speed
-                self.mirrored = False
+            if keys[pg.K_a]:  # Управление влево
+                self.vx = -self.speed
+                self.mirrored = False  # Игрок смотрит налево
+                # Смена кадра через 0.08 секунд
                 if self.timer_animation > 0.08:
-                    self.game.player_run()
-                    self.timer_animation = 0
-        else:
-            self.vx += 72  # для более плавного перехода от границы
+                    self.game.player_run()  # Запуск анимации бега
+                    self.timer_animation = 0  # Сброс таймера
 
+        else:  # Если игрок за границами Ox
+            self.vx += 72  # Плавно отодвинуть игрока
+
+        # Если игрок не заходит за границы Ox
         if self.x < (65 - self.game.step) * 64:
-            if keys[pg.K_d]:
-                if self.vy == 0:
-                    self.vx = self.speed
-                self.mirrored = True
+            if keys[pg.K_d]:  # Управление вправо
+                self.vx = self.speed
+                self.mirrored = True  # Игрок смотрит направо
+                # Смена кадра через 0.08 секунд
                 if self.timer_animation > 0.08:
-                    self.game.player_run()
-                    self.timer_animation = 0
-        else:
-            self.vx -= 72
+                    self.game.player_run()  # Запуск анимации бега
+                    self.timer_animation = 0  # Сброс таймера
 
+        else:  # Если игрок за границами Ox
+            self.vx -= 72  # Плавно отодвинуть игрока
+
+        # Если игрок не двигается, идет состояние и анимация стойки
         if self.vx == 0 and self.vy == 0:
             self.state = "stay"
+            # Смена кадра через 0.15 секунд
             if self.timer_animation > 0.15:
-                self.game.player_stay()
-                self.timer_animation = 0
+                self.game.player_stay()  # Запуск анимации стойки
+                self.timer_animation = 0  # Сброс таймера
+
+        # Если игрок в движении, идет состояние бега
         else:
             self.state = "run"
 
     def update(self):
-        self.timer += self.game.dt
+        self.timer += self.game.dt  # Таймер смены кадров
+        # Смена кадров при беге 0.05 секунд
         if self.state == "run":
             if self.timer > 0.05:
                 self.cur_frame = (self.cur_frame + 1) % len(self.frames)
                 self.image = self.frames[self.cur_frame]
-                self.timer = 0
+                self.timer = 0  # Сброс таймера
+
+        # Смена кадров при стойки 0.5 секунд
         if self.state == "stay":
             if self.timer > 0.5:
                 self.cur_frame = (self.cur_frame + 1) % len(self.frames)
                 self.image = self.frames[self.cur_frame]
-                self.timer = 0
+                self.timer = 0  # Сброс таймера
+
+        # Изменять размер спрайта
         self.image = pg.transform.scale(self.image,
                                         (int(self.size[0] * 4),
                                          int(self.size[1] * 4)))
+        # Проверять управление игрока
         self.key_movement()
+        # Передвижение игрока
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
