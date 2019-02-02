@@ -12,7 +12,7 @@ pg.display.set_caption("Hell Obtained Sensible Tiny And Geniusly Emmy.")
 pg.display.set_icon(pg.image.load("sprites\icon.png"))
 
 screen = pg.display.set_mode((640, 512))
-pg.key.set_repeat(500, 100)
+pg.key.set_repeat(500, 10)
 
 menu_text = pg.font.Font('cyr.ttf', 36)
 start_menu_text = pg.font.Font('cyr.ttf', 48)
@@ -805,10 +805,6 @@ class Game:  # Инициализация игры
                         if event.key == pg.K_ESCAPE:
                             self.pause = True
 
-                        if event.key == pg.K_a or event.key == pg.K_w \
-                                or event.key == pg.K_s or event.key == pg.K_d:
-                            self.player_run()
-
                         #  Уничтожение блоков
                         if event.key == pg.K_SPACE:
                             ifdestroy = False
@@ -1031,12 +1027,6 @@ class Game:  # Инициализация игры
                             else:
                                 self.current_cursor_pos = 0
 
-                if event.type == pg.KEYUP:
-                    if not self.pause:
-                        if event.key == pg.K_a or event.key == pg.K_w \
-                                or event.key == pg.K_s or event.key == pg.K_d:
-                            self.player_stay()
-
             if self.pause:
                 pg.mouse.set_visible(True)
 
@@ -1178,21 +1168,6 @@ class TileMap:
 
         self.entities_enabled = True
 
-    def get_click(self, mouse_pos):
-        cell = self.get_tile(mouse_pos)
-        self.tile_click(cell)
-
-    def get_tile(self, mouse_pos):
-        x = mouse_pos[0] // self.cell_size
-        y = mouse_pos[1] // self.cell_size
-        return x, y
-
-    def tile_click(self, cell):
-        if self.board[cell[1]][cell[0]] < 1:
-            self.board[cell[1]][cell[0]] += 1
-        else:
-            self.board[cell[1]][cell[0]] = 0
-
 
 class Camera:
     # зададим начальный сдвиг камеры
@@ -1279,11 +1254,9 @@ class Player(pg.sprite.Sprite):
         self.vy = 0
 
         self.timer = 0
+        self.timer_animation = 0
         self.x = x * cell_size
         self.y = y * cell_size
-
-        self.left = pg.transform.flip(self.image, False, False)
-        self.right = pg.transform.flip(self.image, True, False)
 
     def comparestates(self):
         if self.tmpstate != self.state:
@@ -1292,6 +1265,7 @@ class Player(pg.sprite.Sprite):
 
     def cut_sheet(self, sheet):
         self.comparestates()
+        self.frames.clear()
         self.rect = pg.Rect(0, 0, sheet.get_width() // 6,
                             sheet.get_height() // 2)
 
@@ -1317,27 +1291,14 @@ class Player(pg.sprite.Sprite):
         self.vx = 0
         self.vy = 0
         keys = pg.key.get_pressed()
-
-        if self.x > self.game.step * 64:
-            if keys[pg.K_a]:
-                if self.vy == 0:
-                    self.vx = -self.speed
-                    self.mirrored = False
-        else:
-            self.vx += 72  # для более плавного перехода от границы
-
-        if self.x < (65 - self.game.step) * 64:
-            if keys[pg.K_d]:
-                if self.vy == 0:
-                    self.vx = self.speed
-                    self.mirrored = True
-        else:
-            self.vx -= 72
-
+        self.timer_animation += self.game.dt
         if self.y > self.game.step * 64:
             if keys[pg.K_w]:
                 if self.vx == 0:
                     self.vy = -self.speed
+                if self.timer_animation > 0.08:
+                    self.game.player_run()
+                    self.timer_animation = 0
         else:
             self.vy += 72
 
@@ -1345,25 +1306,51 @@ class Player(pg.sprite.Sprite):
             if keys[pg.K_s]:
                 if self.vx == 0:
                     self.vy = self.speed
+                if self.timer_animation > 0.08:
+                    self.game.player_run()
+                    self.timer_animation = 0
         else:
             self.vy -= 72
 
-        if self.vx == self.vy == 0:
+        if self.x > self.game.step * 64:
+            if keys[pg.K_a]:
+                if self.vy == 0:
+                    self.vx = -self.speed
+                self.mirrored = False
+                if self.timer_animation > 0.08:
+                    self.game.player_run()
+                    self.timer_animation = 0
+        else:
+            self.vx += 72  # для более плавного перехода от границы
+
+        if self.x < (65 - self.game.step) * 64:
+            if keys[pg.K_d]:
+                if self.vy == 0:
+                    self.vx = self.speed
+                self.mirrored = True
+                if self.timer_animation > 0.08:
+                    self.game.player_run()
+                    self.timer_animation = 0
+        else:
+            self.vx -= 72
+
+        if self.vx == 0 and self.vy == 0:
             self.state = "stay"
+            if self.timer_animation > 0.15:
+                self.game.player_stay()
+                self.timer_animation = 0
         else:
             self.state = "run"
 
     def update(self):
         self.timer += self.game.dt
-
-        if self.state == "stay":
-            if self.timer > 0.5:
+        if self.state == "run":
+            if self.timer > 0.05:
                 self.cur_frame = (self.cur_frame + 1) % len(self.frames)
                 self.image = self.frames[self.cur_frame]
                 self.timer = 0
-
-        if self.state == "run":
-            if self.timer > 0.05:
+        if self.state == "stay":
+            if self.timer > 0.5:
                 self.cur_frame = (self.cur_frame + 1) % len(self.frames)
                 self.image = self.frames[self.cur_frame]
                 self.timer = 0
