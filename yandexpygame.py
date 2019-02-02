@@ -257,7 +257,7 @@ class Level:
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
-        open_Menu()
+        open_menu()
 
 
 # Туториал для игрового мира
@@ -306,7 +306,7 @@ class Tutorial_Terrain:
             # Обновление кадра
             pg.display.flip()
         # Переход в меню
-        open_Menu()
+        open_menu()
 
 
 # Меню выбора персонажей
@@ -441,7 +441,7 @@ class Start_Menu:
             # Обновление кадра
             pg.display.flip()
         # Переход в меню
-        open_Menu()
+        open_menu()
 
 
 # Окно проигрыша
@@ -475,7 +475,7 @@ class Game_Over:
             # Обновление кадра
             pg.display.flip()
         # Перейти в меню
-        open_Menu()
+        open_menu()
 
 
 # Выигрыш игры
@@ -510,7 +510,7 @@ class Win:
             # Обновление кадра
             pg.display.flip()
         # Запуск меню, при выходе
-        open_Menu()
+        open_menu()
 
 
 # Выигрыш секретного уровня
@@ -566,7 +566,7 @@ class Drowned_Children:
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
-        open_Menu()
+        open_menu()
 
 
 # Игровой мир (Уровень 1)
@@ -590,44 +590,51 @@ class Game:
         # Текущий инвентарь игрового мира
         self.inventory = Inventory()
 
-        posx = 0
-        posy = 0
+        posx = 0  # Положение игрока в матрице игрового мира по оси Ox
+        posy = 0  # Положение игрока в матрице игрового мира по оси Oy
 
-        self.gold = 0
-        self.silver_sword = 0
+        self.gold = 0  # Количество золота
+        self.silver_sword = 0  # Вероятность выпадения серебрянного меча
+        # Вероятности выпадения мечей
         self.is_gold_sword = random.randint(0, 100)
         self.is_silver_sword = random.randint(0, 100)
-        self.gold_sword = 0
+        self.gold_sword = 0  # Количество золотых мечей
 
+        # В какой четверти мира появится игрок
         quarter = random.randint(1, 4)
 
-        if quarter == 1:
+        if quarter == 1:  # I-я четверть
             posx = random.randint(1, 15)
             posy = random.randint(1, 15)
 
-        if quarter == 2:
+        if quarter == 2:  # II-я четверть
             posx = random.randint(16, 31)
             posy = random.randint(16, 31)
 
-        if quarter == 3:
+        if quarter == 3:  # III-я четверть
             posx = random.randint(32, 47)
             posy = random.randint(32, 47)
 
-        if quarter == 4:
+        if quarter == 4:  # IV-я четверть
             posx = random.randint(48, 62)
             posy = random.randint(48, 62)
 
-        self.player = Player(all_sprites, self, posx - 0.5, posy - 0.5, 64, boyorgirl)
-        self.camera = Camera()
-        self.inventory = Inventory()
-        self.craft = Craft()
+        # Создание игрока
+        self.player = Player(all_sprites, self, posx - 0.5,
+                             posy - 0.5, 64, boyorgirl)
+        self.camera = Camera()  # Создание камеры
+        self.inventory = Inventory()  # Создание инвентаря
+        self.craft = Craft()  # Создания кравта
 
-        self.mobs = []
+        self.mobs = []  # Лист живых существ
         for _ in range(random.randint(18, 24)):
             self.mobs.append(Cow(animal_group,
-                                 self, random.randint(2, 62), random.randint(2, 62), 64))
+                                 self, random.randint(2, 62),
+                                 random.randint(2, 62), 64))
         self.drop = []
 
+        # Установка интервала пожирания границ мира,
+        # в зависимости от сложности
         if self.difficult == "easy":
             self.cell_timer = 15
         if self.difficult == "medium":
@@ -638,6 +645,7 @@ class Game:
         self.current_cursor_pos = 0
 
     def clear_tiles(self):
+        # Перезагрузка/Очистка всех групп спрайтов
         entities_group.empty()
         tiles_group.empty()
         all_sprites.empty()
@@ -646,28 +654,33 @@ class Game:
         inventory_group.empty()
 
     def player_run(self):
+        # Обработка бегающего игрока
         self.player.state = "run"
         self.player.timer = 0.05
         self.gender()
 
     def gender(self):
-        if self.player.gender == "male":
+        # Обработка пола игрока
+        if self.player.gender == "male":  # Мартин
             if self.player.mirrored:
                 self.player.cut_sheet(load_image("pm_sheet.png"))
             else:
                 self.player.cut_sheet(load_image("p_sheet.png"))
-        else:
+
+        else:  # Марго
             if self.player.mirrored:
                 self.player.cut_sheet(load_image("fm_sheet.png"))
             else:
                 self.player.cut_sheet(load_image("f_sheet.png"))
 
     def player_stay(self):
+        # Обработка стоячего игрока
         self.player.state = "stay"
         self.player.timer = 0.5
         self.gender()
 
     def update_tiles(self):
+        # Обновление всех спрайтов вдоль камеры
         for sprite in tiles_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
         for sprite in entities_group:
@@ -680,10 +693,14 @@ class Game:
             screen.blit(sprite.image, self.camera.apply(sprite))
 
     def world_cutting(self):
+        # Если таймер уничтожения границ больше, чем
+        # заданное время уничтожения границ по сложности
+        # мир пожирается по краям
         self.timer_cut += self.dt
         if self.timer_cut > self.cell_timer:
-            self.step += 1
-
+            self.step += 1  # Пожирание N границ увеличивается
+            # Пожирание границ,
+            # путем изменения значений в матрице
             for i in range(self.world.w):
                 self.world.world_array[self.step - 1][i] = -1
                 self.world.world_array[-self.step][i] = -1
@@ -692,6 +709,8 @@ class Game:
                 self.world.world_array[i][self.step - 1] = -1
                 self.world.world_array[i][-self.step] = -1
 
+            # Перезагрузка карты игрового мира
+            # природных объектов и животных
             self.world.render()
 
             tiles_group.update()
@@ -699,7 +718,7 @@ class Game:
             animal_group.update()
 
             world_cut_sound.play()
-            self.timer_cut = 0
+            self.timer_cut = 0  # Сброс таймера
 
     def check_cows(self):
         for i in range(len(self.mobs)):
@@ -735,23 +754,28 @@ class Game:
                             self.mobs[j].vy += 5
 
     def append_drop(self, x, y):
-        b = random.randint(0, 100)
+        b = random.randint(0, 100)  # Вероятность выпадения M-го предмета
+        # Если золотой меч имеет вероятность меньше 50%
+        # то из природных объектов выпадает золотые слитки
         if self.is_gold_sword < 50:
             if b < 30 and self.gold < 2:
                 self.drop.append(Drop("gold", self.player, x, y, self))
                 self.gold += 1
-
+        # Если золотой меч имеет вероятность больше или равно 50%
+        # то из природных объектов выпадает золотой меч
         if self.is_gold_sword >= 50:
             if b >= 70 and self.gold_sword < 1:
                 self.drop.append(Drop("gold_sword", self.player, x, y, self))
                 self.gold_sword += 1
-
+        # Если серебрянный меч имеет вероятность больше 50% и 100% появление,
+        # то из природных объектов выпадает серебрянный меч
         if self.is_silver_sword >= 50:
             if b == 100 and self.silver_sword < 1:
                 self.drop.append(Drop("silver_sword", self.player, x, y, self))
                 self.silver_sword += 1
 
     def append_drop_block(self, x, y, i):
+        # Выпадение мясного блока, золотого и серебрянного меча
         if i == 5:
             self.drop.append(Drop("meat_block", self.player, x, y, self))
         if i == 6:
@@ -760,48 +784,69 @@ class Game:
             self.drop.append(Drop("silver_sword", self.player, x, y, self))
 
     def cow_and_player(self):
-        self.tmpmobs = []
+        self.tmpmobs = []  # Буферный лист живых существ
         for i in range(len(self.mobs)):
+            # Если живое существо касается героя
             if self.mobs[i].rect.colliderect(self.player.rect):
+                # Если в руках топор, то у коровы отнимается 2 жизни
                 if self.tool == "axe":
                     self.mobs[i].hp -= 2
                     hit_sound.play()
+                # Если в руках ножницы, то у коровы отнимается 1 жизнь
                 else:
                     self.mobs[i].hp -= 1
                     hit_sound.play()
 
                 if self.mobs[i].check_hp():
+                    # Если живое существо имеет жизни == 0, то оно погибает
                     cow_died.play()
                     self.mobs[i].kill()
+                    # Перезагрузка выпавших вещей
                     drop_group.update()
+                    # Если в руках топор, то выпадает мясо
                     if self.tool == "axe":
-                        self.drop.append(Drop("meat", self.player, int((self.player.rect.x + 32) / 4096 * 64)
-                                              , int((self.player.rect.y + 32) / 4096 * 64), self))
+                        self.drop.append(Drop("meat", self.player,
+                                              int((self.player.rect.x + 32) / 4096 * 64)
+                                              , int((self.player.rect.y + 32) / 4096 * 64),
+                                              self))
+                    # Если в руках ножницы, то выпадают глаза
                     else:
-                        self.drop.append(Drop("eyes", self.player, int((self.player.rect.x + 32) / 4096 * 64)
-                                              , int((self.player.rect.y + 32) / 4096 * 64), self))
+                        self.drop.append(Drop("eyes", self.player,
+                                              int((self.player.rect.x + 32) / 4096 * 64)
+                                              , int((self.player.rect.y + 32) / 4096 * 64),
+                                              self))
+                    # Буферный лист добавляет соотвествующее животное
                     self.tmpmobs.append(i)
-
+        # Если буферный лист заполнен, то все животные в этом листе очищаются в основном
         if self.tmpmobs:
             for i in range(len(self.tmpmobs)):
                 del self.mobs[self.tmpmobs[i]]
-
+        # Очистка буферного листа животных
         self.tmpmobs.clear()
 
     def craft_checking(self):
+        # Проверка подсказки создания вещей
         for i in range(self.inventory.w):
+            # Если в инвентаре есть мясо и глаза, то отображается подсказка
+            # создания сухожилия
             if self.inventory.inv[0][i] == "meat" or self.inventory.inv[0][i] == "eyes":
                 if self.current_cursor_pos == i:
                     if self.inventory.check_craft_meat():
                         self.craft.craft_type = 0
+
+            # Если в инвентаре есть золото, то отображается подсказка
+            # создания золотого меча
             if self.inventory.inv[0][i] == "gold":
                 if self.current_cursor_pos == i:
                     if self.inventory.check_craft_gold():
                         self.craft.craft_type = 1
 
     def drop_clean(self):
+        # Очистка упавших вещей
         if self.drop:
             for i in range(len(self.drop)):
+                # При уничтожении, уничтоженный предмет попадает в
+                # буферный лист
                 if self.drop[i].check_drop_pos() == 1:
                     self.drop[i].kill()
                     self.tmplist.remove(i)
@@ -810,22 +855,27 @@ class Game:
                     self.drop[i].kill()
                     self.inventory.append(self.drop[i].type)
                     self.tmplist.append(i)
-
+        # Если буферный лист забит, то лист упавших вещей
+        # удаляет элементы, содержащиеся в буферном листе
         if self.tmplist:
             for i in range(len(self.tmplist)):
                 del self.drop[self.tmplist[i]]
-
+        # Очистка буферного листа
         self.tmplist.clear()
 
     def put_block(self, block):
+        # Установка предметов из инвентаря
         b = 0
         index1 = 0
         for i in range(self.inventory.w):
+            # Если данный предмет присутствует, то
+            # берутся индекс и присутсвие предмета из инвентаря
             if self.inventory.inv[0][i] == block and \
                     self.inventory.inv[1][i] > 0:
                 b += 1
                 index1 = i
         if b:
+            # Удаление соотвествующего предмета из инвентаря
             self.inventory.inv[1][index1] -= 1
             if self.inventory.inv[1][index1] == 0:
                 self.inventory.invtmp.remove(self.inventory.inv[0][index1])
@@ -859,27 +909,38 @@ class Game:
         self.cursor = load_image("cursor.png")
         self.cursor = pg.transform.scale(self.cursor, (72, 72))
         while self.running:
-            screen.fill((0, 0, 0))
-            if not self.pause:
-                pg.mouse.set_visible(False)
-                self.dt = self.clock.tick(self.FPS) / 1000
+            # Положение игрока внутри матрицы мира
+            x = int((self.player.rect.x + 32) / 4096 * 64)
+            y = int((self.player.rect.y + 32) / 4096 * 64)
 
+            # Обновление кадра, путем заливки
+            screen.fill((0, 0, 0))
+            # Если пауза не активирована
+            if not self.pause:
+                pg.mouse.set_visible(False)  # Скрыть курсор
+                self.dt = self.clock.tick(self.FPS) / 1000
+                # Время в игре
                 self.time_in_game += self.dt
+                # Функция пожирания мира
                 self.world_cutting()
+                # Обновлять положение камеры за игроком
                 self.camera.update(self.player)
+                # Обновлять игровой мир
                 self.update_tiles()
 
-                # Кравт отображение
+                # Проверка кравта и его отображение
                 self.craft.craft_type = -1
                 self.craft_checking()
                 self.craft.render()
 
             for event in pg.event.get():
+                # Закрытие окна
                 if event.type == pg.QUIT:
                     quit()
                     self.running = False
 
                 if event.type == pg.MOUSEMOTION:
+                    # Анимация текста при включенной паузе
                     if self.pause:
                         if continue_rect.collidepoint(event.pos):
                             continue_txt = start_menu_text.render("Continue", 0, (255, 255, 255))
@@ -894,127 +955,139 @@ class Game:
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         if self.pause:
+                            # Кнопка продолжить игру
                             if continue_rect.collidepoint(event.pos):
                                 self.pause = False
-
+                            # Кнопка выхода из игры
                             if quit_rect.collidepoint(event.pos):
                                 self.running = False
 
                 if event.type == pg.KEYDOWN:
                     # Очистка дропа, если касается игрок.
                     self.drop_clean()
-                    # Сверху, очистки блок
 
-                    if not self.pause:
+                    if not self.pause:  # Пока не пауза
+                        # Открытие меню паузы
                         if event.key == pg.K_ESCAPE:
                             self.pause = True
 
                         #  Уничтожение блоков
                         if event.key == pg.K_SPACE:
-                            ifdestroy = False
-                            x = int((self.player.rect.x + 32) / 4096 * 64)
-                            y = int((self.player.rect.y + 32) / 4096 * 64)
-
-                            # Влево
+                            ifdestroy = False  # Флаг разрушенности блоков
+                            # Слева, если это природные объекты
                             if 0 < self.world.entities[y][x - 1] < 5:
                                 self.world.entities[y][x - 1] = 0
                                 self.append_drop(x - 1, y)
                                 ifdestroy = True
 
+                            # Слева, если это мясной блок
                             if self.world.entities[y][x - 1] == 5:
                                 self.world.entities[y][x - 1] = 0
                                 self.append_drop_block(x - 1, y, 5)
                                 ifdestroy = True
 
+                            # Слева, если это золотой меч
                             if self.world.entities[y][x - 1] == 6:
                                 self.world.entities[y][x - 1] = 0
                                 self.append_drop_block(x - 1, y, 6)
                                 ifdestroy = True
 
+                            # Слева, если это серебрянный меч
                             if self.world.entities[y][x - 1] == 7:
                                 self.world.entities[y][x - 1] = 0
                                 self.append_drop_block(x - 1, y, 7)
                                 ifdestroy = True
 
-                            # Вправо
+                            # Вправо, если это природные объекты
                             if 0 < self.world.entities[y][x + 1] < 5:
                                 self.world.entities[y][x + 1] = 0
                                 self.append_drop(x + 1, y)
                                 ifdestroy = True
 
+                            # Вправо, если это мясной блок
                             if self.world.entities[y][x + 1] == 5:
                                 self.world.entities[y][x + 1] = 0
                                 self.append_drop_block(x + 1, y, 5)
                                 ifdestroy = True
 
+                            # Вправо, если это золотой меч
                             if self.world.entities[y][x + 1] == 6:
                                 self.world.entities[y][x + 1] = 0
                                 self.append_drop_block(x + 1, y, 6)
                                 ifdestroy = True
 
+                            # Вправо, если это серебрянный меч
                             if self.world.entities[y][x + 1] == 7:
                                 self.world.entities[y][x + 1] = 0
                                 self.append_drop_block(x + 1, y, 7)
                                 ifdestroy = True
 
-                            # Снизу
+                            # Снизу, если это природные объекты
                             if 0 < self.world.entities[y + 1][x] < 5:
                                 self.world.entities[y + 1][x] = 0
                                 self.append_drop(x, y + 1)
                                 ifdestroy = True
-
+                            # Снизу, если это мясной блок
                             if self.world.entities[y + 1][x] == 5:
                                 self.world.entities[y + 1][x] = 0
                                 self.append_drop_block(x, y + 1, 5)
                                 ifdestroy = True
 
+                            # Снизу, если это золотой меч
                             if self.world.entities[y + 1][x] == 6:
                                 self.world.entities[y + 1][x] = 0
                                 self.append_drop_block(x, y + 1, 6)
                                 ifdestroy = True
 
+                            # Снизу, если это серебрянный меч
                             if self.world.entities[y + 1][x] == 7:
                                 self.world.entities[y + 1][x] = 0
                                 self.append_drop_block(x, y + 1, 7)
                                 ifdestroy = True
 
-                            # Сверху
+                            # Сверху, если это природные объекты
                             if 0 < self.world.entities[y - 1][x] < 5:
                                 self.world.entities[y - 1][x] = 0
                                 self.append_drop(x, y - 1)
                                 ifdestroy = True
 
+                            # Сверху, если это мясной блок
                             if self.world.entities[y - 1][x] == 5:
                                 self.world.entities[y - 1][x] = 0
                                 self.append_drop_block(x, y - 1, 5)
                                 ifdestroy = True
 
+                            # Сверху, если это золотой меч
                             if self.world.entities[y - 1][x] == 6:
                                 self.world.entities[y - 1][x] = 0
                                 self.append_drop_block(x, y - 1, 6)
                                 ifdestroy = True
 
+                            # Сверху, если это серебрянный меч
                             if self.world.entities[y - 1][x] == 7:
                                 self.world.entities[y - 1][x] = 0
                                 self.append_drop_block(x, y - 1, 7)
                                 ifdestroy = True
 
-                            # По центру
+                            # По центру, если это природные объекты
                             if 0 < self.world.entities[y][x] < 5:
                                 self.world.entities[y][x] = 0
                                 self.append_drop(x, y)
                                 ifdestroy = True
 
+                            # По центру, если это мясной блок
                             if self.world.entities[y][x] == 5:
                                 self.world.entities[y][x] = 0
                                 self.append_drop_block(x, y, 5)
                                 ifdestroy = True
 
+                            # По центру, если это золотой меч
                             if self.world.entities[y][x] == 6:
                                 self.world.entities[y][x] = 0
                                 self.append_drop_block(x, y, 6)
                                 ifdestroy = True
 
+                            # По центру, если это серебрянный меч
                             if self.world.entities[y][x] == 7:
                                 self.world.entities[y][x] = 0
                                 self.append_drop_block(x, y, 7)
@@ -1022,19 +1095,22 @@ class Game:
 
                             # Само уничтожение
                             if ifdestroy:
+                                # Обновление групп спрайтов и мира
                                 self.world.render()
                                 entities_destroy.play()
                                 entities_group.update()
                                 drop_group.update()
                                 ifdestroy = False
 
+                        # Установка блоков
                         if event.key == pg.K_m:
-                            x = int((self.player.rect.x + 32) / 4096 * 64)
-                            y = int((self.player.rect.y + 32) / 4096 * 64)
-
                             for i in range(self.inventory.w):
+                                # Если в инвентаре есть мясной блок
+                                # И курсор находится на его позиции
                                 if self.inventory.inv[0][i] == "meat_block":
                                     if self.current_cursor_pos == i:
+                                        # Установка блока в зависимости
+                                        # От положения игрока
                                         if self.player.mirrored:
                                             if self.world.entities[y][x + 1] < 5:
                                                 self.world.entities[y][x + 1] = 5
@@ -1048,8 +1124,12 @@ class Game:
                                                 entities_group.update()
                                                 self.put_block("meat_block")
 
+                                # Если в инвентаре есть золотой меч
+                                # И курсор находится на его позиции
                                 if self.inventory.inv[0][i] == "gold_sword":
                                     if self.current_cursor_pos == i:
+                                        # Установка блока в зависимости
+                                        # От положения игрока
                                         if self.player.mirrored:
                                             if self.world.entities[y][x + 1] < 5:
                                                 self.world.entities[y][x + 1] = 6
@@ -1063,8 +1143,12 @@ class Game:
                                                 entities_group.update()
                                                 self.put_block("gold_sword")
 
+                                # Если в инвентаре есть серебрянный меч
+                                # И курсор находится на его позиции
                                 if self.inventory.inv[0][i] == "silver_sword":
                                     if self.current_cursor_pos == i:
+                                        # Установка блока в зависимости
+                                        # От положения игрока
                                         if self.player.mirrored:
                                             if self.world.entities[y][x + 1] < 5:
                                                 self.world.entities[y][x + 1] = 7
@@ -1092,18 +1176,22 @@ class Game:
 
                         # Создание вещей
                         if event.key == pg.K_c:
-                            b = 0
-                            index1 = 0
-                            index2 = 0
+                            b = 0  # Подсчет компонентов
+                            index1 = 0  # Индексы ячеек элементов создания вещей
+                            index2 = 0  # Индексы ячеек элементов создания вещей
+                            # Создание сухожилий
                             if self.craft.craft_type == 0:
                                 for i in range(self.inventory.w):
+                                    # Если мяса и сухожилий больше или равно одной штуке в инвентаре
                                     if self.inventory.inv[0][i] == "meat" and self.inventory.inv[1][i] > 0:
                                         b += 1
                                         index1 = i
                                     if self.inventory.inv[0][i] == "eyes" and self.inventory.inv[1][i] > 0:
                                         b += 1
                                         index2 = i
+                                # Если это так, то идет создание сухожилий
                                 if b == 2:
+                                    # Отнимаются соотвественно вещи
                                     self.inventory.inv[1][index1] -= 1
                                     self.inventory.inv[1][index2] -= 1
                                     if self.inventory.inv[1][index1] == 0:
@@ -1113,20 +1201,23 @@ class Game:
                                     if self.inventory.inv[1][index2] == 0:
                                         self.inventory.invtmp.remove(self.inventory.inv[0][index2])
                                         self.inventory.inv[0][index2] = 0
-
+                                    # Сухожилие добавлено в инвентарь
                                     self.inventory.append("meat_block")
 
                             if self.craft.craft_type == 1:
                                 for i in range(self.inventory.w):
+                                    # Если золота в инвентаре больше одной штуки, то идет создание меча
                                     if self.inventory.inv[0][i] == "gold" and self.inventory.inv[1][i] > 1:
                                         b += 1
                                         index1 = i
+                                # Если это так, то идет создание золотого меча
                                 if b:
+                                    # Отнимаются соотвественно вещи
                                     self.inventory.inv[1][index1] -= 2
                                     if self.inventory.inv[1][index1] == 0:
                                         self.inventory.invtmp.remove(self.inventory.inv[0][index1])
                                         self.inventory.inv[0][index1] = 0
-
+                                    # Золотой меч добавлен в инвентарь
                                     self.inventory.append("gold_sword")
 
                         # Изменение положения курсора в инвентаре
@@ -1214,7 +1305,7 @@ class Game:
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
-        open_Menu()
+        open_menu()
 
 
 # Игровой мир (Карта)
@@ -1965,11 +2056,11 @@ class Secret_Level:
                 screen.blit(self.cursor, (72 * self.current_cursor_pos + 240, 0))
 
             pg.display.flip()
-        open_Menu()
+        open_menu()
 
 
 # Функция открытия меню
-def open_Menu():
+def open_menu():
     men = Menu()
     men.run()
 
@@ -1981,4 +2072,4 @@ def quit():
 
 
 # Сам запуск всей игры
-open_Menu()
+open_menu()
