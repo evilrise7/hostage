@@ -1488,47 +1488,52 @@ class Player(pg.sprite.Sprite):
         self.rect.y = self.y
 
 
+# Инвентарь
 class Inventory:
     def __init__(self):
-        self.w = 5
-        self.inv = [[0] * self.w for _ in range(2)]
-        # self.inv = [["gold", "meat", "eyes", 0], [2, 9, 9, 0]]
-        self.invtmp = []
+        self.w = 5  # Длина инветаря
+        self.inv = [[0] * self.w for _ in range(2)]  # Лист инвентаря
+        self.invtmp = []    # Буферный лист инвентаря
 
     def render(self):
-        inventory_group.empty()
+        inventory_group.empty()  # Очистить все спрайты инветаря
         for i in range(self.w):
+            # Пустой слот
             if self.inv[0][i] == 0 or self.inv[1][i] == 0:
                 Inventory_Tile('empty', i)
-
+            # Слот с золотом
             if self.inv[0][i] == "gold" and self.inv[1][i] != 0:
                 Inventory_Tile('gold', i)
-
+            # Слот с серебрянным мечом
             if self.inv[0][i] == "silver_sword" and self.inv[1][i] != 0:
                 Inventory_Tile('silver_sword', i)
-
+            # Слот с золотым мечом
             if self.inv[0][i] == "gold_sword" and self.inv[1][i] != 0:
                 Inventory_Tile('gold_sword', i)
-
+            # Слот с мясом
             if self.inv[0][i] == "meat" and self.inv[1][i] != 0:
                 Inventory_Tile('meat', i)
-
+            # Слот с глазами
             if self.inv[0][i] == "eyes" and self.inv[1][i] != 0:
                 Inventory_Tile('eyes', i)
-
+            # Слот с сухожилием
             if self.inv[0][i] == "meat_block" and self.inv[1][i] != 0:
                 Inventory_Tile('meat_block', i)
-
+            # Добавление ячеек инвентаря на экран
             screen.blit(start_menu_text.render(str(self.inv[1][i]),
-                                               0, (255, 255, 255)), (284 + (i * 72), 72))
+                                               0, (255, 255, 255)),
+                        (284 + (i * 72), 72))
 
     def append(self, type):
+        # Добавление вещей в инвентарь
         for i in range(self.w):
+            # Если такого предмета нет в инвентаре, он попадает в новый слот
             if type not in self.invtmp:
                 if self.inv[0][i] == 0:
                     self.inv[0][i] = type
                     self.inv[1][i] += 1
                     self.invtmp.append(type)
+            # Если такой предмет существует в инвентаре, он прибавляется
             else:
                 if self.inv[0][i] == type:
                     self.inv[0][i] = type
@@ -1536,6 +1541,7 @@ class Inventory:
 
     def check_craft_meat(self):
         b = 0
+        # Проверка предметов для соотвествующего кравта(мяса)
         for i in range(self.w):
             if self.inv[0][i] == "meat" and self.inv[1][i] >= 1:
                 b += 1
@@ -1548,60 +1554,73 @@ class Inventory:
 
     def check_craft_gold(self):
         b = 0
+        # Проверка предметов для соотвествующего кравта(золотой меч)
         for i in range(self.w):
             if self.inv[0][i] == "gold" and self.inv[1][i] == 2:
                 b += 1
         return b
 
 
+# Создание вещей
 class Craft:
     def __init__(self):
+        # Создание мяса
         self.craft_meat = load_image("craft_meat.png")
         self.craft_meat = pg.transform.scale(self.craft_meat, (360, 72))
 
+        # Создание золота
         self.craft_gold = load_image("craft_gold.png")
         self.craft_gold = pg.transform.scale(self.craft_gold, (360, 72))
-        self.craft_type = -1
+        self.craft_type = -1    # Текущий кравт обнулен
 
     def render(self):
         if self.craft_type == 0:
+            # Добавить объект кравта мяса на экран
             screen.blit(self.craft_meat, (150, 440))
 
         if self.craft_type == 1:
+            # Добавить объект кравта золота на экран
             screen.blit(self.craft_gold, (150, 440))
 
 
+# Ячейка инвентаря
 class Inventory_Tile(pg.sprite.Sprite):
     def __init__(self, types, x):
         super().__init__(inventory_group)
-        self.cell_size = 72
-        self.image = inventory_images[types]
+        self.cell_size = 72  # Размер ячейки
+        self.image = inventory_images[types]    # Спрайт из словаря
+        # Изменяются размеры спрайта ячейки
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
+        # Прямоугольная маска спрайта
         self.rect = self.image.get_rect().move(self.cell_size * x + 240, 0)
 
 
+# Выпадение вещей
 class Drop(pg.sprite.Sprite):
     def __init__(self, types, player, x, y, game):
         super().__init__(drop_group)
-        self.type = types
-        self.cell_size = 64
-        self.image = drop_images[types]
+        self.type = types   # Тип вещи
+        self.cell_size = 64  # Размер клетки
+        self.image = drop_images[types]  # Спрайт берется из словаря
+        # Изменяются размеры
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
-
+        # Прямоугольная маска спрайта
         self.rect = self.image.get_rect().move(self.cell_size * x,
                                                self.cell_size * y)
-        self.player = player
-        self.step = game.step
+        self.player = player    # Текущий игрок
+        self.step = game.step   # Текущее состояние пожирания мира
 
     def get_event(self):
+        # Если игрок касается выпавшей вещи
         if self.rect.collidepoint((self.player.rect.x + 32),
                                   (self.player.rect.y + 32)):
             pick_up_sound.play()
             return True
 
     def check_drop_pos(self):
+        # Вещи уничтожаются при соприкосновении с границей мира
         if self.rect.x < 64 * self.step:
             return 1
 
