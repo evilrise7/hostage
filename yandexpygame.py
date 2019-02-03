@@ -24,6 +24,7 @@ start_menu_text = pg.font.Font('cyr.ttf', 48)
 # Группы спрайтов. Я оформил их отдельно, чтобы изменять поле игры
 all_sprites = pg.sprite.Group()
 tiles_group = pg.sprite.Group()
+secret_group = pg.sprite.Group()
 entities_group = pg.sprite.Group()
 inventory_group = pg.sprite.Group()
 drop_group = pg.sprite.Group()
@@ -79,7 +80,12 @@ tile_images = {"grass": load_image('grass.png'),
 secret_images = {"bath": load_image('bath.png'),
                  "shower": load_image('shower.png'),
                  "right_eye": load_image('eye2.png'),
-                 "left_eye": load_image('eye1.png')}
+                 "left_eye": load_image('eye1.png'),
+                 "victim1": load_image('victim1.png'),
+                 "victim2": load_image('victim2.png'),
+                 "victim3": load_image('victim3.png'),
+                 "victim4": load_image('victim4.png'),
+                 "victim5": load_image('victim5.png')}
 
 # Словарь спрайтов природных объектов
 entity_images = {"green": load_image('green.png'),
@@ -97,7 +103,12 @@ inventory_images = {"empty": load_image('empty.png'),
                     "meat": load_image('meat_inv.png'),
                     "gold": load_image('gold_inv.png'),
                     "gold_sword": load_image('gold_sword_inv.png'),
-                    "silver_sword": load_image('silver_sword_inv.png')}
+                    "silver_sword": load_image('silver_sword_inv.png'),
+                    "victim1": load_image('victim1_inv.png'),
+                    "victim2": load_image('victim2_inv.png'),
+                    "victim3": load_image('victim3_inv.png'),
+                    "victim4": load_image('victim4_inv.png'),
+                    "victim5": load_image('victim5_inv.png')}
 
 # Словарь спрайтов выпавших вещей
 drop_images = {"meat": load_image('meat.png'),
@@ -108,7 +119,6 @@ drop_images = {"meat": load_image('meat.png'),
                "meat_block": load_image('meat_block.png')}
 
 # Файлы загрузки результатов
-input_score = open("score.txt", "r")
 output_score = open("score.txt", "w")
 
 # Переменная отвечает за запуск секретного уровня
@@ -139,11 +149,6 @@ class Menu:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.running = False  # Выход из игры, при закрытии окна
-
-                # Тест секретного уровня
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_u:
-                        Drowned_Children().run()
 
                 # Выход из игры нажатием ESC
                 if event.type == pg.K_ESCAPE:
@@ -242,7 +247,7 @@ class Level:
                     # Запустить секретный уровень
                     if self.level_secret_rect.collidepoint(event.pos) and self.level == 1:
                         click_sound.play()
-                        self.running = False
+                        Secret_Level().run()
 
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
@@ -504,8 +509,8 @@ class Win:
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             # Добавление объектов на экран
-            screen.blit(start_menu_text.render("You win!", 0, (0, 255, 0)), (200, 200))
-            screen.blit(menu_text.render("Your time is", 0, (255, 255, 255)), (225, 250))
+            screen.blit(start_menu_text.render("You win!", 0, (0, 255, 0)), (210, 200))
+            screen.blit(menu_text.render("Your time is", 0, (255, 255, 255)), (200, 250))
             screen.blit(menu_text.render(str(self.score), 0, (255, 255, 255)), (250, 290))
             # Обновление кадра
             pg.display.flip()
@@ -1686,6 +1691,17 @@ class Inventory:
             # Слот с сухожилием
             if self.inv[0][i] == "meat_block" and self.inv[1][i] != 0:
                 Inventory_Tile('meat_block', i)
+            # Слот с жертвами
+            if self.inv[0][i] == "victim1" and self.inv[1][i] != 0:
+                Inventory_Tile('victim1', i)
+            if self.inv[0][i] == "victim2" and self.inv[1][i] != 0:
+                Inventory_Tile('victim2', i)
+            if self.inv[0][i] == "victim3" and self.inv[1][i] != 0:
+                Inventory_Tile('victim3', i)
+            if self.inv[0][i] == "victim4" and self.inv[1][i] != 0:
+                Inventory_Tile('victim4', i)
+            if self.inv[0][i] == "victim5" and self.inv[1][i] != 0:
+                Inventory_Tile('victim5', i)
             # Добавление ячеек инвентаря на экран
             screen.blit(start_menu_text.render(str(self.inv[1][i]),
                                                0, (255, 255, 255)),
@@ -1935,41 +1951,85 @@ class Cow(pg.sprite.Sprite):
         self.rect.y = self.y
 
 
+# Секретный уровень
 class Secret_Level:
     def __init__(self):
-        self.dt = 0
-        self.FPS = 100
-        self.clock = pg.time.Clock()
-        self.children = 0
-        self.drop = []
-        self.inventory = Inventory()
-        self.camera = Camera()
+        self.step = 0  # За пределы карты, игрок не сможет выйти
+        self.dt = 0  # Обновление времени внутри системы
+        self.FPS = 100  # Кадры в секунду для оптимизации
+        self.clock = pg.time.Clock()  # Внутриигровые часы
+        self.children = 5  # Подсчет оставшихся полотенец(внутри дети)
+        self.drop = []  # Лист собравшихся полотенец
+        self.player = Player(all_sprites, self, 30, 31, 64, "female")  # Текущий игрок
+        self.inventory = Inventory()  # Текущий инвентарь
+        self.camera = Camera()  # Текущая камера
+        # К каждому полотенцу будет взято рандомные числа X, Y - его координаты
+        # random.sample -  делает так, чтобы координаты не повторялись
+        self.list_coordinates_victims = random.sample(range(1, 63), 10)
+        self.screamer = 0  # Индикатор скримера
 
     def update_tiles(self):
-        for sprite in tiles_group:
+        # Передвижение всех спрайтов вдоль камеры
+        for sprite in secret_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
         for sprite in all_sprites:
             screen.blit(sprite.image, self.camera.apply(sprite))
-        for sprite in drop_group:
-            screen.blit(sprite.image, self.camera.apply(sprite))
 
-    def drop_clean(self):
+    def player_run(self):
+        # Обработка бегающего игрока
+        self.player.state = "run"
+        self.player.timer = 0.05
+        self.gender()
+
+    def gender(self):
+        if self.player.mirrored:
+            self.player.cut_sheet(load_image("fm_sheet.png"))
+        else:
+            self.player.cut_sheet(load_image("f_sheet.png"))
+
+    def player_stay(self):
+        # Обработка стоячего игрока
+        self.player.state = "stay"
+        self.player.timer = 0.5
+        self.gender()
+
+    def check_victims(self):
+        # Проверка упавших полотенец и добавление их в инвентарь
+        self.tmplist = []  # Буферный лист полотенец
+        # Если игрок касается полотенца, оно уничтожается,
+        # а игрок получает в инвентарь соотвествующее полотенце
         if self.drop:
             for i in range(len(self.drop)):
-                if self.drop[i].get_event() == 1:
-                    self.drop[i].kill()
-                    self.inventory.append(self.drop[i].type)
-                    self.tmplist.append(i)
-
+                self.drop[i].kill()
+                self.inventory.append(self.drop[i].type)
+                self.tmplist.append(i)
+        # Если буферный лист забит, то он очищает лист упавших полотенец,
+        #  в целях того, чтобы не добавлялось 1+ полотенец, а только одно
         if self.tmplist:
             for i in range(len(self.tmplist)):
+                self.children -= 1
+                self.list_victims.remove(self.drop[i])
                 del self.drop[self.tmplist[i]]
 
-        self.tmplist.clear()
-
     def run(self):
+        inventory_group.empty()
         # Загружаю мир и инвентарь
-        self.world.render()
+        Secret_Tile('bath', 30, 30, self.player)
+        Secret_Tile('shower', 31, 30, self.player)
+        Secret_Tile('left_eye', 29.5, 29, self.player)
+        Secret_Tile('right_eye', 30.5, 29, self.player)
+        # Загружаю полотенца
+        self.list_victims = [Secret_Tile('victim1', self.list_coordinates_victims[0],
+                                         self.list_coordinates_victims[1], self.player),
+                             Secret_Tile('victim2', self.list_coordinates_victims[2],
+                                         self.list_coordinates_victims[3], self.player),
+                             Secret_Tile('victim3', self.list_coordinates_victims[4],
+                                         self.list_coordinates_victims[5], self.player),
+                             Secret_Tile('victim4', self.list_coordinates_victims[6],
+                                         self.list_coordinates_victims[7], self.player),
+                             Secret_Tile('victim5', self.list_coordinates_victims[8],
+                                         self.list_coordinates_victims[9], self.player)]
+        # Перезагружаю инвентарь
         self.inventory.render()
         self.running = True
 
@@ -1978,85 +2038,89 @@ class Secret_Level:
         inventory_group.update()
         drop_group.update()
 
-        # Кнопки паузы
-        continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
-        continue_rect = continue_txt.get_rect().move(60, 100)
-
-        quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
-        quit_rect = quit_txt.get_rect().move(60, 160)
-
         # Лист, чтобы прослеживать уже добавленные предметы
         self.tmplist = []
-
-        self.cursor = load_image("cursor.png")
-        self.cursor = pg.transform.scale(self.cursor, (72, 72))
+        # Скример
+        self.screamer_img = load_image("screamer.png")
+        # Затемненные края
+        self.overlay = load_image("overlay.png")
         while self.running:
+            # Обновление экрана путем заливки
             screen.fill((0, 0, 0))
-            if not self.pause:
-                pg.mouse.set_visible(False)
-                self.dt = self.clock.tick(self.FPS) / 1000
-
-                self.camera.update(self.player)
-                self.update_tiles()
+            pg.mouse.set_visible(False)  # Отключить курсор
+            self.dt = self.clock.tick(self.FPS) / 1000
+            # Обновлять камеру за игроком
+            self.camera.update(self.player)
+            self.update_tiles()  # Обновлять спрайты вдоль камеры
+            # Проверять, касаются ли полотенца игрока
+            if self.list_victims:
+                for i in range(len(self.list_victims)):
+                    if self.list_victims[i].collide_with_player() == 1:
+                        self.drop.append(self.list_victims[i])
+            self.check_victims()
+            secret_group.update()  # Обновлять состояние спрайтов секретного уровня
 
             for event in pg.event.get():
+                # Закрытие окна
                 if event.type == pg.QUIT:
                     quit()
                     self.running = False
-
-                if event.type == pg.MOUSEMOTION:
-                    if self.pause:
-                        if continue_rect.collidepoint(event.pos):
-                            continue_txt = start_menu_text.render("Continue", 0, (255, 255, 255))
-                        else:
-                            continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
-
-                        if quit_rect.collidepoint(event.pos):
-                            quit_txt = start_menu_text.render("Quit", 0, (255, 255, 255))
-                        else:
-                            quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
-
-                if event.type == pg.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        if self.pause:
-                            if continue_rect.collidepoint(event.pos):
-                                self.pause = False
-
-                            if quit_rect.collidepoint(event.pos):
-                                self.running = False
-
                 if event.type == pg.KEYDOWN:
-                    self.drop_clean()
-                    if not self.pause:
-                        if event.key == pg.K_p:
-                            if self.current_cursor_pos < self.inventory.w - 1:
-                                self.current_cursor_pos += 1
-                            else:
-                                self.current_cursor_pos = 0
-
-                if event.type == pg.KEYUP:
-                    if not self.pause:
-                        if event.key == pg.K_a or event.key == pg.K_w \
-                                or event.key == pg.K_s or event.key == pg.K_d:
-                            self.player_stay()
-
-            if self.pause:
-                pg.mouse.set_visible(True)
-
-                screen.blit(continue_txt, (60, 100))
-                screen.blit(quit_txt, (60, 160))
-
-            if not self.pause:
-                if self.children == 5:
-                    Drowned_Children().run()
-                all_sprites.update()
-                self.inventory.render()
-                inventory_group.update()
-                inventory_group.draw(screen)
-                screen.blit(self.cursor, (72 * self.current_cursor_pos + 240, 0))
-
+                    # Если все полотенца взяты, то при нажатии SPACE,
+                    # игра завершается
+                    if event.key == pg.K_SPACE:
+                        if self.children <= 0:
+                            Drowned_Children().run()
+            # Обновление игрока и инвентаря
+            all_sprites.update()
+            # Затемненные края добавить
+            screen.blit(self.overlay, (0, 0))
+            self.inventory.render()
+            inventory_group.update()
+            inventory_group.draw(screen)
+            # Индикатор скримера
+            self.screamer = random.randint(0, 500)
+            # Если полотенца еще остались, то выходит
+            # соответствующий текст
+            if self.children > 0:
+                screen.blit(start_menu_text.render(
+                    "Find all " + str(self.children) + " towels",
+                    0, (255, 255, 255)), (110, 400))
+            # Если все собрано, то игра завершается при нажатии
+            # SPACE
+            else:
+                screen.blit(start_menu_text.render(
+                    "PRESS SPACE TO UNCOVER IT",
+                    0, (255, 255, 255)), (30, 400))
+            # Задержка скримера и его добавление на экран
+            if self.screamer >= 495 and (self.player.vx or self.player.vy):
+                screen.blit(self.screamer_img, (0, 0))
+            # Обновление кадра
             pg.display.flip()
+        # Переход в меню
         open_menu()
+
+
+# Ячейка спрайта игрового поля
+class Secret_Tile(pg.sprite.Sprite):
+    def __init__(self, types, x, y, player):
+        super().__init__(secret_group)
+        self.cell_size = 64  # Размер ячейки
+        self.type = types  # Тип ячейки, для загрузки соответсвующего спрайта
+        self.image = secret_images[types]  # Загрузка спрайта
+        # Изменение размеров ячейки
+        self.player = player
+        self.image = pg.transform.scale(self.image,
+                                        (self.cell_size, self.cell_size))
+        # Прямоугольная маска
+        self.rect = self.image.get_rect().move(self.cell_size * x,
+                                               self.cell_size * y)
+
+    def collide_with_player(self):
+        if self.rect.collidepoint((self.player.rect.x + 32, self.player.rect.y + 32)):
+            if "victim" in self.type:
+                pick_up_sound.play()
+                return 1
 
 
 # Функция открытия меню
