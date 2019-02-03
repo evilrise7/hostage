@@ -118,9 +118,6 @@ drop_images = {"meat": load_image('meat.png'),
                "silver_sword": load_image('silver_sword.png'),
                "meat_block": load_image('meat_block.png')}
 
-# Файлы загрузки результатов
-output_score = open("score.txt", "w")
-
 # Переменная отвечает за запуск секретного уровня
 psycho_level = 0
 
@@ -149,10 +146,6 @@ class Menu:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.running = False  # Выход из игры, при закрытии окна
-
-                # Выход из игры нажатием ESC
-                if event.type == pg.K_ESCAPE:
-                    self.running = False
 
                 # "Анимированные" тексты кнопок меню
                 if event.type == pg.MOUSEMOTION:
@@ -189,8 +182,8 @@ class Menu:
                         Level().run()
 
                     if record_rect.collidepoint(event.pos):
-                        print(1)
                         click_sound.play()
+                        Score().run()
                     if settings_rect.collidepoint(event.pos):
                         print(2)
                         click_sound.play()
@@ -269,6 +262,87 @@ class Level:
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
+        open_menu()
+
+
+class Score:
+    def __init__(self):
+        self.running = True
+        self.score_list = []
+
+    def decoder(self, score):
+        # Перекордировщик для честности
+        score = score.replace("Z", "0")
+        score = score.replace("#", "1")
+        score = score.replace("@", "2")
+        score = score.replace("B", "3")
+        score = score.replace("F", "4")
+        score = score.replace("D", "5")
+        score = score.replace("U", "6")
+        score = score.replace("E", "7")
+        score = score.replace("X", "8")
+        score = score.replace("M", "9")
+        score = score.replace("/", ":")
+        return score
+
+    def top5scores(self):
+        # Отступ для рекордов
+        liney = 160
+        # Чтение всех строк из файла с рекордами
+        with open('score.txt', 'r') as score_file:
+            self.score_list = [line.strip() for line in score_file]
+
+        if not self.score_list or self.score_list[0] == "":
+            # Если отсутсвуют рекорды, то пишется текст "Пусто"
+            screen.blit(menu_text.render(
+                "Empty", 0, (255, 255, 255)), (150, 150))
+
+        # Если рекорды присутствуют
+        else:
+            # Сортирую для топа
+            self.score_list.sort()
+            # Вырезаю первые 5 рекордов, если длина листа превышает 5
+            if len(self.score_list) > 5:
+                self.score_list = self.score_list[0:5]
+
+            for i in range(len(self.score_list)):
+                # Перекодировщик рекорда
+                self.score_list[i] = self.decoder(self.score_list[i])
+                # Добавления самих рекордов
+                screen.blit(menu_text.render(
+                    str(i + 1) + ". " + str(self.score_list[i]),
+                    0, (255, 255, 255)), (100, liney))
+                liney += 30  # Добавление отсутпа
+
+    def run(self):
+        # Заголовок Результаты
+        score_title = menu_text.render("TOP 5 SPEEDRUNS:", 0, (255, 255, 255))
+
+        while self.running:
+            for event in pg.event.get():
+                # Выход из игры, при закрытии окна
+                if event.type == pg.QUIT:
+                    quit()
+                    self.running = False
+
+                # Выход из игры нажатием ESC
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.running = False
+
+            # Логотип игры
+            image = load_image("logo.png")
+            image = pg.transform.scale(image, (144, 196))
+
+            # Обновления кадра, путем заливки
+            screen.fill((0, 0, 0))
+            # Добавить спрайты на экран
+            screen.blit(image, (400, 150))
+            screen.blit(score_title, (80, 100))
+            self.top5scores()
+            # Обновление кадра
+            pg.display.flip()
+        # Перейти в меню
         open_menu()
 
 
@@ -502,13 +576,30 @@ class Win:
     def __init__(self, score):
         self.score = score  # Время прохождения игры
 
+    def coder(self, score_output):
+        # Кордировщик для честности
+        score_output = score_output.replace("0", "Z")
+        score_output = score_output.replace("1", "#")
+        score_output = score_output.replace("2", "@")
+        score_output = score_output.replace("3", "B")
+        score_output = score_output.replace("4", "F")
+        score_output = score_output.replace("5", "D")
+        score_output = score_output.replace("6", "U")
+        score_output = score_output.replace("7", "E")
+        score_output = score_output.replace("8", "X")
+        score_output = score_output.replace("9", "M")
+        score_output = score_output.replace(":", "/")
+        return score_output
+
     def run(self):
         self.running = True
         # Запись результата в текстовый документ
-        output_score.write(str(self.score))
+        output_score = open("score.txt", "a")
+        # Кодирование результатов и запись
+        writing_score = self.coder(self.score)
+        output_score.write(str(writing_score) + "\n")
         output_score.close()
         while self.running:
-
             for event in pg.event.get():
                 # Закрытие окна
                 if event.type == pg.QUIT:
