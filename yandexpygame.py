@@ -157,19 +157,25 @@ class Menu:
                 # "Анимированные" тексты кнопок меню
                 if event.type == pg.MOUSEMOTION:
                     if start_game_rect.collidepoint(event.pos):
-                        start_game = menu_text.render("Start Game", 0, (255, 255, 255))
+                        start_game = menu_text.render("Start Game",
+                                                      0, (255, 255, 255))
                     else:
-                        start_game = menu_text.render("Start Game", 0, (100, 100, 100))
+                        start_game = menu_text.render("Start Game",
+                                                      0, (100, 100, 100))
 
                     if record_rect.collidepoint(event.pos):
-                        record_txt = menu_text.render("Scores", 0, (255, 255, 255))
+                        record_txt = menu_text.render("Scores", 0,
+                                                      (255, 255, 255))
                     else:
-                        record_txt = menu_text.render("Scores", 0, (100, 100, 100))
+                        record_txt = menu_text.render("Scores", 0,
+                                                      (100, 100, 100))
 
                     if settings_rect.collidepoint(event.pos):
-                        settings_txt = menu_text.render("Settings", 0, (255, 255, 255))
+                        settings_txt = menu_text.render("Settings",
+                                                        0, (255, 255, 255))
                     else:
-                        settings_txt = menu_text.render("Settings", 0, (100, 100, 100))
+                        settings_txt = menu_text.render("Settings",
+                                                        0, (100, 100, 100))
 
                     if exit_rect.collidepoint(event.pos):
                         exit_txt = menu_text.render("Quit", 0, (255, 255, 255))
@@ -245,7 +251,8 @@ class Level:
                         click_sound.play()
                         Tutorial_Terrain().run()
                     # Запустить секретный уровень
-                    if self.level_secret_rect.collidepoint(event.pos) and self.level == 1:
+                    if self.level_secret_rect.collidepoint(
+                            event.pos) and self.level == 1:
                         click_sound.play()
                         Secret_Level().run()
 
@@ -253,7 +260,7 @@ class Level:
             screen.fill((0, 0, 0))
             # Добавление объектов на экран
             screen.blit(start_menu_text.render("CHOOSE YOUR LEVEL!",
-                                                0, (255, 255, 255)), (110, 20))
+                                               0, (255, 255, 255)), (110, 20))
 
             screen.blit(self.level_terrain, (0, 120))
             # Если секретный уровень открыт, добавить его выбор на экран
@@ -306,8 +313,9 @@ class Tutorial_Terrain:
             # Добавление слайдов
             screen.blit(load_image("t" + str(self.slide) + ".png"), (0, 0))
             if not self.show:
-                screen.blit(start_menu_text.render("Click to slide",
-                                                   0, (255, 255, 255)), (20, 20))
+                screen.blit(
+                    start_menu_text.render("Click to slide",
+                                           0, (255, 255, 255)), (20, 20))
             # Обновление кадра
             pg.display.flip()
         # Переход в меню
@@ -375,7 +383,8 @@ class Start_Menu:
                     # Запуск игры
                     if event.key == pg.K_SPACE:
                         if self.difficult != "" and self.gender != "":
-                            Game(difficult=self.difficult, boyorgirl=self.gender).run()
+                            Game(difficult=self.difficult,
+                                 boyorgirl=self.gender).run()
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     # Выбор Мартина
@@ -403,20 +412,25 @@ class Start_Menu:
 
             # Анимация текстов Персонажей
             if self.gender == "female":
-                margo_txt = start_menu_text.render("MARGO", 0, (255, 255, 255))
+                margo_txt = start_menu_text.render(
+                    "MARGO", 0, (255, 255, 255))
 
             if self.gender == "male":
-                martin_txt = start_menu_text.render("MARTIN", 0, (255, 255, 255))
+                martin_txt = start_menu_text.render(
+                    "MARTIN", 0, (255, 255, 255))
 
             # Анимация сложностей
             if self.difficult == "easy":
-                easy_txt = start_menu_text.render("EASY", 0, (255, 255, 255))
+                easy_txt = start_menu_text.render(
+                    "EASY", 0, (255, 255, 255))
 
             if self.difficult == "medium":
-                medium_txt = start_menu_text.render("MEDIUM", 0, (255, 255, 255))
+                medium_txt = start_menu_text.render(
+                    "MEDIUM", 0, (255, 255, 255))
 
             if self.difficult == "hardcore":
-                hardcore_txt = start_menu_text.render("HARD", 0, (255, 255, 255))
+                hardcore_txt = start_menu_text.render(
+                    "HARD", 0, (255, 255, 255))
 
             # Добавление объектов на экран
             screen.blit(martin_image, (70, 80))
@@ -431,14 +445,14 @@ class Start_Menu:
 
             # Если игрок выбрал все, что ему нужно
             if self.difficult != "" and self.gender != "":
-                press_to_start = start_menu_text.render("PRESS SPACE TO BEGIN!",
-                                                        0, (255, 255, 255))
+                press_to_start = start_menu_text.render(
+                    "PRESS SPACE TO BEGIN!", 0, (255, 255, 255))
                 screen.blit(press_to_start, (70, 20))
 
             # Если игрок выбрал персонажа
             elif self.difficult == "" and self.gender:
-                press_to_start = start_menu_text.render("CHOOSE DIFFUCLTY!",
-                                                        0, (255, 255, 255))
+                press_to_start = start_menu_text.render(
+                    "CHOOSE DIFFUCLTY!", 0, (255, 255, 255))
                 screen.blit(press_to_start, (130, 20))
             # Если игрок только зашел в игру и ничего не выбрал
             elif self.difficult == "" and self.gender == "":
@@ -470,13 +484,13 @@ class Game_Over:
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             if psycho_level:
-                # Если открыт секретный уровень, будет изменен текст проигрыша
-                screen.blit(start_menu_text.render("Children.", 0, (255, 0, 0)),
-                            (200, 200))
+                # Если открыт секретный уровень, будет изменен текст дети
+                screen.blit(start_menu_text.render(
+                    "Children.", 0, (255, 0, 0)), (200, 200))
             else:
-                # Если не открыт секретный уровень, будет изменен текст проигрыша
-                screen.blit(start_menu_text.render("Game Over", 0, (255, 0, 0)),
-                            (200, 200))
+                # Если не открыт, будет изменен текст проигрыша
+                screen.blit(start_menu_text.render(
+                    "Game Over", 0, (255, 0, 0)), (200, 200))
             # Обновление кадра
             pg.display.flip()
         # Перейти в меню
@@ -509,9 +523,12 @@ class Win:
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             # Добавление объектов на экран
-            screen.blit(start_menu_text.render("You win!", 0, (0, 255, 0)), (210, 200))
-            screen.blit(menu_text.render("Your time is", 0, (255, 255, 255)), (200, 250))
-            screen.blit(menu_text.render(str(self.score), 0, (255, 255, 255)), (250, 290))
+            screen.blit(start_menu_text.render(
+                "You win!", 0, (0, 255, 0)), (210, 200))
+            screen.blit(menu_text.render(
+                "Your time is", 0, (255, 255, 255)), (200, 250))
+            screen.blit(menu_text.render(
+                str(self.score), 0, (255, 255, 255)), (250, 290))
             # Обновление кадра
             pg.display.flip()
         # Запуск меню, при выходе
@@ -741,7 +758,8 @@ class Game:
             for j in range(len(self.mobs)):
                 if self.mobs[i] != self.mobs[j]:
                     # Если животное касается других, то оно отлетает
-                    if self.mobs[i].rect.collidepoint(self.mobs[j].rect.topleft):
+                    if self.mobs[i].rect.collidepoint(
+                            self.mobs[j].rect.topleft):
                         if self.mobs[i].rect.x + 32 < self.mobs[j].rect.x:
                             self.mobs[i].vy += 5
                             self.mobs[j].vy -= 5
@@ -803,6 +821,10 @@ class Game:
                     hit_sound.play()
 
                 if self.mobs[i].check_hp():
+                    # Беру координаты игрока, т.к. PEP8 ругался
+                    # за то, что я писал длинные строки
+                    x = int((self.player.rect.x + 32) / 4096 * 64)
+                    y = int((self.player.rect.y + 32) / 4096 * 64)
                     # Если живое существо имеет жизни == 0, то оно погибает
                     cow_died.play()
                     self.mobs[i].kill()
@@ -810,19 +832,14 @@ class Game:
                     drop_group.update()
                     # Если в руках топор, то выпадает мясо
                     if self.tool == "axe":
-                        self.drop.append(Drop("meat", self.player,
-                                              int((self.player.rect.x + 32) / 4096 * 64)
-                                              , int((self.player.rect.y + 32) / 4096 * 64),
-                                              self))
+                        self.drop.append(Drop("meat", self.player, x, y, self))
                     # Если в руках ножницы, то выпадают глаза
                     else:
-                        self.drop.append(Drop("eyes", self.player,
-                                              int((self.player.rect.x + 32) / 4096 * 64)
-                                              , int((self.player.rect.y + 32) / 4096 * 64),
-                                              self))
+                        self.drop.append(Drop("eyes", self.player, x, y, self))
                     # Буферный лист добавляет соотвествующее животное
                     self.tmpmobs.append(i)
-        # Если буферный лист заполнен, то все животные в этом листе очищаются в основном
+        # Если буферный лист заполнен,
+        # то все животные в этом листе очищаются в основном
         if self.tmpmobs:
             for i in range(len(self.tmpmobs)):
                 del self.mobs[self.tmpmobs[i]]
@@ -832,14 +849,17 @@ class Game:
     def craft_checking(self):
         # Проверка подсказки создания вещей
         for i in range(self.inventory.w):
-            # Если в инвентаре есть мясо и глаза, то отображается подсказка
+            # Если в инвентаре есть мясо и глаза,
+            # то отображается подсказка
             # создания сухожилия
-            if self.inventory.inv[0][i] == "meat" or self.inventory.inv[0][i] == "eyes":
+            if self.inventory.inv[0][i] == "meat" \
+                    or self.inventory.inv[0][i] == "eyes":
                 if self.current_cursor_pos == i:
                     if self.inventory.check_craft_meat():
                         self.craft.craft_type = 0
 
-            # Если в инвентаре есть золото, то отображается подсказка
+            # Если в инвентаре есть золото,
+            # то отображается подсказка
             # создания золотого меча
             if self.inventory.inv[0][i] == "gold":
                 if self.current_cursor_pos == i:
@@ -917,7 +937,10 @@ class Game:
             # Положение игрока внутри матрицы мира
             x = int((self.player.rect.x + 32) / 4096 * 64)
             y = int((self.player.rect.y + 32) / 4096 * 64)
-
+            xl = x - 1  # Клетка слева
+            xr = x + 1  # Клетка справа
+            yu = y - 1  # Клетка сверху
+            yd = y + 1  # Клетка снизу
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             # Если пауза не активирована
@@ -948,14 +971,18 @@ class Game:
                     # Анимация текста при включенной паузе
                     if self.pause:
                         if continue_rect.collidepoint(event.pos):
-                            continue_txt = start_menu_text.render("Continue", 0, (255, 255, 255))
+                            continue_txt = start_menu_text.render(
+                                "Continue", 0, (255, 255, 255))
                         else:
-                            continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
+                            continue_txt = start_menu_text.render(
+                                "Continue", 0, (100, 100, 100))
 
                         if quit_rect.collidepoint(event.pos):
-                            quit_txt = start_menu_text.render("Quit", 0, (255, 255, 255))
+                            quit_txt = start_menu_text.render(
+                                "Quit", 0, (255, 255, 255))
                         else:
-                            quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
+                            quit_txt = start_menu_text.render(
+                                "Quit", 0, (100, 100, 100))
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if event.button == 1:
@@ -980,98 +1007,98 @@ class Game:
                         if event.key == pg.K_SPACE:
                             ifdestroy = False  # Флаг разрушенности блоков
                             # Слева, если это природные объекты
-                            if 0 < self.world.entities[y][x - 1] < 5:
-                                self.world.entities[y][x - 1] = 0
-                                self.append_drop(x - 1, y)
+                            if 0 < self.world.entities[y][xl] < 5:
+                                self.world.entities[y][xl] = 0
+                                self.append_drop(xl, y)
                                 ifdestroy = True
 
                             # Слева, если это мясной блок
-                            if self.world.entities[y][x - 1] == 5:
-                                self.world.entities[y][x - 1] = 0
-                                self.append_drop_block(x - 1, y, 5)
+                            if self.world.entities[y][xl] == 5:
+                                self.world.entities[y][xl] = 0
+                                self.append_drop_block(xl, y, 5)
                                 ifdestroy = True
 
                             # Слева, если это золотой меч
-                            if self.world.entities[y][x - 1] == 6:
-                                self.world.entities[y][x - 1] = 0
-                                self.append_drop_block(x - 1, y, 6)
+                            if self.world.entities[y][xl] == 6:
+                                self.world.entities[y][xl] = 0
+                                self.append_drop_block(xl, y, 6)
                                 ifdestroy = True
 
                             # Слева, если это серебрянный меч
-                            if self.world.entities[y][x - 1] == 7:
-                                self.world.entities[y][x - 1] = 0
-                                self.append_drop_block(x - 1, y, 7)
+                            if self.world.entities[y][xl] == 7:
+                                self.world.entities[y][xl] = 0
+                                self.append_drop_block(xl, y, 7)
                                 ifdestroy = True
 
                             # Вправо, если это природные объекты
-                            if 0 < self.world.entities[y][x + 1] < 5:
-                                self.world.entities[y][x + 1] = 0
-                                self.append_drop(x + 1, y)
+                            if 0 < self.world.entities[y][xr] < 5:
+                                self.world.entities[y][xr] = 0
+                                self.append_drop(xr, y)
                                 ifdestroy = True
 
                             # Вправо, если это мясной блок
-                            if self.world.entities[y][x + 1] == 5:
-                                self.world.entities[y][x + 1] = 0
-                                self.append_drop_block(x + 1, y, 5)
+                            if self.world.entities[y][xr] == 5:
+                                self.world.entities[y][xr] = 0
+                                self.append_drop_block(xr, y, 5)
                                 ifdestroy = True
 
                             # Вправо, если это золотой меч
-                            if self.world.entities[y][x + 1] == 6:
-                                self.world.entities[y][x + 1] = 0
-                                self.append_drop_block(x + 1, y, 6)
+                            if self.world.entities[y][xr] == 6:
+                                self.world.entities[y][xr] = 0
+                                self.append_drop_block(xr, y, 6)
                                 ifdestroy = True
 
                             # Вправо, если это серебрянный меч
-                            if self.world.entities[y][x + 1] == 7:
-                                self.world.entities[y][x + 1] = 0
-                                self.append_drop_block(x + 1, y, 7)
+                            if self.world.entities[y][xr] == 7:
+                                self.world.entities[y][xr] = 0
+                                self.append_drop_block(xr, y, 7)
                                 ifdestroy = True
 
                             # Снизу, если это природные объекты
-                            if 0 < self.world.entities[y + 1][x] < 5:
-                                self.world.entities[y + 1][x] = 0
-                                self.append_drop(x, y + 1)
+                            if 0 < self.world.entities[yd][x] < 5:
+                                self.world.entities[yd][x] = 0
+                                self.append_drop(x, yd)
                                 ifdestroy = True
                             # Снизу, если это мясной блок
-                            if self.world.entities[y + 1][x] == 5:
-                                self.world.entities[y + 1][x] = 0
-                                self.append_drop_block(x, y + 1, 5)
+                            if self.world.entities[yd][x] == 5:
+                                self.world.entities[yd][x] = 0
+                                self.append_drop_block(x, yd, 5)
                                 ifdestroy = True
 
                             # Снизу, если это золотой меч
-                            if self.world.entities[y + 1][x] == 6:
-                                self.world.entities[y + 1][x] = 0
-                                self.append_drop_block(x, y + 1, 6)
+                            if self.world.entities[yd][x] == 6:
+                                self.world.entities[yd][x] = 0
+                                self.append_drop_block(x, yd, 6)
                                 ifdestroy = True
 
                             # Снизу, если это серебрянный меч
-                            if self.world.entities[y + 1][x] == 7:
-                                self.world.entities[y + 1][x] = 0
-                                self.append_drop_block(x, y + 1, 7)
+                            if self.world.entities[yd][x] == 7:
+                                self.world.entities[yd][x] = 0
+                                self.append_drop_block(x, yd, 7)
                                 ifdestroy = True
 
                             # Сверху, если это природные объекты
-                            if 0 < self.world.entities[y - 1][x] < 5:
-                                self.world.entities[y - 1][x] = 0
-                                self.append_drop(x, y - 1)
+                            if 0 < self.world.entities[yu][x] < 5:
+                                self.world.entities[yu][x] = 0
+                                self.append_drop(x, yu)
                                 ifdestroy = True
 
                             # Сверху, если это мясной блок
-                            if self.world.entities[y - 1][x] == 5:
-                                self.world.entities[y - 1][x] = 0
-                                self.append_drop_block(x, y - 1, 5)
+                            if self.world.entities[yu][x] == 5:
+                                self.world.entities[yu][x] = 0
+                                self.append_drop_block(x, yu, 5)
                                 ifdestroy = True
 
                             # Сверху, если это золотой меч
-                            if self.world.entities[y - 1][x] == 6:
-                                self.world.entities[y - 1][x] = 0
-                                self.append_drop_block(x, y - 1, 6)
+                            if self.world.entities[yu][x] == 6:
+                                self.world.entities[yu][x] = 0
+                                self.append_drop_block(x, yu, 6)
                                 ifdestroy = True
 
                             # Сверху, если это серебрянный меч
-                            if self.world.entities[y - 1][x] == 7:
-                                self.world.entities[y - 1][x] = 0
-                                self.append_drop_block(x, y - 1, 7)
+                            if self.world.entities[yu][x] == 7:
+                                self.world.entities[yu][x] = 0
+                                self.append_drop_block(x, yu, 7)
                                 ifdestroy = True
 
                             # По центру, если это природные объекты
@@ -1117,14 +1144,14 @@ class Game:
                                         # Установка блока в зависимости
                                         # От положения игрока
                                         if self.player.mirrored:
-                                            if self.world.entities[y][x + 1] < 5:
-                                                self.world.entities[y][x + 1] = 5
+                                            if self.world.entities[y][xr] < 5:
+                                                self.world.entities[y][xr] = 5
                                                 self.world.render()
                                                 entities_group.update()
                                                 self.put_block("meat_block")
                                         else:
-                                            if self.world.entities[y][x - 1] < 5:
-                                                self.world.entities[y][x - 1] = 5
+                                            if self.world.entities[y][xl] < 5:
+                                                self.world.entities[y][xl] = 5
                                                 self.world.render()
                                                 entities_group.update()
                                                 self.put_block("meat_block")
@@ -1136,14 +1163,14 @@ class Game:
                                         # Установка блока в зависимости
                                         # От положения игрока
                                         if self.player.mirrored:
-                                            if self.world.entities[y][x + 1] < 5:
-                                                self.world.entities[y][x + 1] = 6
+                                            if self.world.entities[y][xr] < 5:
+                                                self.world.entities[y][xr] = 6
                                                 self.world.render()
                                                 entities_group.update()
                                                 self.put_block("gold_sword")
                                         else:
-                                            if self.world.entities[y][x - 1] < 5:
-                                                self.world.entities[y][x - 1] = 6
+                                            if self.world.entities[y][xl] < 5:
+                                                self.world.entities[y][xl] = 6
                                                 self.world.render()
                                                 entities_group.update()
                                                 self.put_block("gold_sword")
@@ -1155,14 +1182,14 @@ class Game:
                                         # Установка блока в зависимости
                                         # От положения игрока
                                         if self.player.mirrored:
-                                            if self.world.entities[y][x + 1] < 5:
-                                                self.world.entities[y][x + 1] = 7
+                                            if self.world.entities[y][xr] < 5:
+                                                self.world.entities[y][xr] = 7
                                                 self.world.render()
                                                 entities_group.update()
                                                 self.put_block("silver_sword")
                                         else:
-                                            if self.world.entities[y][x - 1] < 5:
-                                                self.world.entities[y][x - 1] = 7
+                                            if self.world.entities[y][xl] < 5:
+                                                self.world.entities[y][xl] = 7
                                                 self.world.render()
                                                 entities_group.update()
                                                 self.put_block("silver_sword")
@@ -1182,16 +1209,20 @@ class Game:
                         # Создание вещей
                         if event.key == pg.K_c:
                             b = 0  # Подсчет компонентов
-                            index1 = 0  # Индексы ячеек элементов создания вещей
-                            index2 = 0  # Индексы ячеек элементов создания вещей
+                            # Индексы ячеек элементов создания вещей
+                            index1 = 0
+                            index2 = 0
                             # Создание сухожилий
                             if self.craft.craft_type == 0:
                                 for i in range(self.inventory.w):
-                                    # Если мяса и сухожилий больше или равно одной штуке в инвентаре
-                                    if self.inventory.inv[0][i] == "meat" and self.inventory.inv[1][i] > 0:
+                                    # Если мяса и сухожилий больше
+                                    # или равно одной штуке в инвентаре
+                                    if self.inventory.inv[0][i] == "meat"\
+                                            and self.inventory.inv[1][i] > 0:
                                         b += 1
                                         index1 = i
-                                    if self.inventory.inv[0][i] == "eyes" and self.inventory.inv[1][i] > 0:
+                                    if self.inventory.inv[0][i] == "eyes"\
+                                            and self.inventory.inv[1][i] > 0:
                                         b += 1
                                         index2 = i
                                 # Если это так, то идет создание сухожилий
@@ -1200,19 +1231,23 @@ class Game:
                                     self.inventory.inv[1][index1] -= 1
                                     self.inventory.inv[1][index2] -= 1
                                     if self.inventory.inv[1][index1] == 0:
-                                        self.inventory.invtmp.remove(self.inventory.inv[0][index1])
+                                        self.inventory.invtmp.remove(
+                                            self.inventory.inv[0][index1])
                                         self.inventory.inv[0][index1] = 0
 
                                     if self.inventory.inv[1][index2] == 0:
-                                        self.inventory.invtmp.remove(self.inventory.inv[0][index2])
+                                        self.inventory.invtmp.remove(
+                                            self.inventory.inv[0][index2])
                                         self.inventory.inv[0][index2] = 0
                                     # Сухожилие добавлено в инвентарь
                                     self.inventory.append("meat_block")
 
                             if self.craft.craft_type == 1:
                                 for i in range(self.inventory.w):
-                                    # Если золота в инвентаре больше одной штуки, то идет создание меча
-                                    if self.inventory.inv[0][i] == "gold" and self.inventory.inv[1][i] > 1:
+                                    # Если золота в инвентаре больше
+                                    # одной штуки, то идет создание меча
+                                    if self.inventory.inv[0][i] == "gold"\
+                                            and self.inventory.inv[1][i] > 1:
                                         b += 1
                                         index1 = i
                                 # Если это так, то идет создание золотого меча
@@ -1220,7 +1255,8 @@ class Game:
                                     # Отнимаются соотвественно вещи
                                     self.inventory.inv[1][index1] -= 2
                                     if self.inventory.inv[1][index1] == 0:
-                                        self.inventory.invtmp.remove(self.inventory.inv[0][index1])
+                                        self.inventory.invtmp.remove(
+                                            self.inventory.inv[0][index1])
                                         self.inventory.inv[0][index1] = 0
                                     # Золотой меч добавлен в инвентарь
                                     self.inventory.append("gold_sword")
@@ -1230,12 +1266,14 @@ class Game:
                             # Если курсор еще не в конце инветаря
                             if self.current_cursor_pos < self.inventory.w - 1:
                                 self.current_cursor_pos += 1
-                            # Если курсор уже на последней ячейке, то он переходит на первую
+                            # Если курсор уже на последней ячейке,
+                            # то он переходит на первую
                             else:
                                 self.current_cursor_pos = 0  # Сброс курсора
 
             if self.pause:
-                # Когда пауза, курсор и кнопки: Продолжить, Выйти - активированы
+                # Когда пауза, курсор и кнопки:
+                # Продолжить, Выйти - активированы
                 pg.mouse.set_visible(True)
                 # Добавление кнопок меню паузы на экран
                 screen.blit(continue_txt, (60, 100))  # Продолжить
@@ -1261,15 +1299,16 @@ class Game:
                             то игра завершается и игрок выигрывает
                             '''
                             if self.world.entities[j][i] == 5 and \
-                                    self.world.entities[j][i + 1] == 5 and \
-                                    self.world.entities[j][i + 2] == 5 and \
-                                    self.world.entities[j + 1][i] == 5 and \
-                                    self.world.entities[j + 1][i + 1] == 6 and \
-                                    self.world.entities[j + 1][i + 2] == 5 and \
-                                    self.world.entities[j + 2][i] == 5 and \
-                                    self.world.entities[j + 2][i + 1] == 5 and \
+                                self.world.entities[j][i + 1] == 5 and \
+                                self.world.entities[j][i + 2] == 5 and \
+                                self.world.entities[j + 1][i] == 5 and \
+                                self.world.entities[j + 1][i + 1] == 6 and \
+                                self.world.entities[j + 1][i + 2] == 5 and \
+                                self.world.entities[j + 2][i] == 5 and\
+                                self.world.entities[j + 2][i + 1] == 5 and\
                                     self.world.entities[j + 2][i + 2] == 5:
-                                Win(str(datetime.timedelta(seconds=int(self.time_in_game)))).run()
+                                Win(str(datetime.timedelta(
+                                    seconds=int(self.time_in_game)))).run()
                             '''
                             Если тотем построен в виде:
                             С С С
@@ -1278,13 +1317,13 @@ class Game:
                             то игра завершается и секретный уровень активирован
                             '''
                             if self.world.entities[j][i] == 5 and \
-                                    self.world.entities[j][i + 1] == 5 and \
-                                    self.world.entities[j][i + 2] == 5 and \
-                                    self.world.entities[j + 1][i] == 5 and \
-                                    self.world.entities[j + 1][i + 1] == 7 and \
-                                    self.world.entities[j + 1][i + 2] == 5 and \
-                                    self.world.entities[j + 2][i] == 5 and \
-                                    self.world.entities[j + 2][i + 1] == 5 and \
+                                self.world.entities[j][i + 1] == 5 and \
+                                self.world.entities[j][i + 2] == 5 and \
+                                self.world.entities[j + 1][i] == 5 and \
+                                self.world.entities[j + 1][i + 1] == 7 and \
+                                self.world.entities[j + 1][i + 2] == 5 and \
+                                self.world.entities[j + 2][i] == 5 and \
+                                self.world.entities[j + 2][i + 1] == 5 and\
                                     self.world.entities[j + 2][i + 2] == 5:
                                 global psycho_level
                                 psycho_level = 1
@@ -1303,10 +1342,11 @@ class Game:
                 axe_scissors = load_image(str(self.tool) + ".png")
                 axe_scissors = pg.transform.scale(axe_scissors, (72, 72))
                 # Добавление текущего инструмента в руках героя на экран
-                screen.blit(start_menu_text.render(str(self.tool),
-                                                   0, (255, 255, 255)), (64, 72))
+                screen.blit(start_menu_text.render(
+                    str(self.tool), 0, (255, 255, 255)), (64, 72))
                 screen.blit(axe_scissors, (64, 0))
-                screen.blit(self.cursor, (72 * self.current_cursor_pos + 240, 0))
+                screen.blit(self.cursor,
+                            (72 * self.current_cursor_pos + 240, 0))
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
@@ -1960,7 +2000,8 @@ class Secret_Level:
         self.clock = pg.time.Clock()  # Внутриигровые часы
         self.children = 5  # Подсчет оставшихся полотенец(внутри дети)
         self.drop = []  # Лист собравшихся полотенец
-        self.player = Player(all_sprites, self, 30, 31, 64, "female")  # Текущий игрок
+        self.player = Player(all_sprites,
+                             self, 30, 31, 64, "female")  # Текущий игрок
         self.inventory = Inventory()  # Текущий инвентарь
         self.camera = Camera()  # Текущая камера
         # К каждому полотенцу будет взято рандомные числа X, Y - его координаты
@@ -2019,16 +2060,21 @@ class Secret_Level:
         Secret_Tile('left_eye', 29.5, 29, self.player)
         Secret_Tile('right_eye', 30.5, 29, self.player)
         # Загружаю полотенца
-        self.list_victims = [Secret_Tile('victim1', self.list_coordinates_victims[0],
-                                         self.list_coordinates_victims[1], self.player),
-                             Secret_Tile('victim2', self.list_coordinates_victims[2],
-                                         self.list_coordinates_victims[3], self.player),
-                             Secret_Tile('victim3', self.list_coordinates_victims[4],
-                                         self.list_coordinates_victims[5], self.player),
-                             Secret_Tile('victim4', self.list_coordinates_victims[6],
-                                         self.list_coordinates_victims[7], self.player),
-                             Secret_Tile('victim5', self.list_coordinates_victims[8],
-                                         self.list_coordinates_victims[9], self.player)]
+        self.list_victims = [Secret_Tile(
+            'victim1', self.list_coordinates_victims[0],
+            self.list_coordinates_victims[1], self.player),
+                             Secret_Tile(
+            'victim2', self.list_coordinates_victims[2],
+            self.list_coordinates_victims[3], self.player),
+                             Secret_Tile(
+            'victim3', self.list_coordinates_victims[4],
+            self.list_coordinates_victims[5], self.player),
+                             Secret_Tile(
+            'victim4', self.list_coordinates_victims[6],
+            self.list_coordinates_victims[7], self.player),
+                             Secret_Tile(
+            'victim5', self.list_coordinates_victims[8],
+            self.list_coordinates_victims[9], self.player)]
         # Перезагружаю инвентарь
         self.inventory.render()
         self.running = True
@@ -2058,7 +2104,8 @@ class Secret_Level:
                     if self.list_victims[i].collide_with_player() == 1:
                         self.drop.append(self.list_victims[i])
             self.check_victims()
-            secret_group.update()  # Обновлять состояние спрайтов секретного уровня
+            # Обновлять состояние спрайтов секретного уровня
+            secret_group.update()
 
             for event in pg.event.get():
                 # Закрытие окна
@@ -2117,7 +2164,8 @@ class Secret_Tile(pg.sprite.Sprite):
                                                self.cell_size * y)
 
     def collide_with_player(self):
-        if self.rect.collidepoint((self.player.rect.x + 32, self.player.rect.y + 32)):
+        if self.rect.collidepoint((self.player.rect.x + 32,
+                                   self.player.rect.y + 32)):
             if "victim" in self.type:
                 pick_up_sound.play()
                 return 1
