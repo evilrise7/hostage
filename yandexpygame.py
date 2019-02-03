@@ -32,26 +32,23 @@ animal_group = pg.sprite.Group()
 
 # Звук клика в меню
 click_sound = pg.mixer.Sound("sounds\walk.wav")
-click_sound.set_volume(0.4)
 
 # Звук подбора вещей в игре
 pick_up_sound = pg.mixer.Sound("sounds\pickup.wav")
-pick_up_sound.set_volume(1)
 
 # Звук пожирания мира
 world_cut_sound = pg.mixer.Sound("sounds\cut.wav")
-world_cut_sound.set_volume(7.0)
 
 # Звук уничтожения природных объектов(трава, камень, цветки и кусты)
 entities_destroy = pg.mixer.Sound("sounds\pick.wav")
-entities_destroy.set_volume(0.4)
 
 # Звук удара коровки
 hit_sound = pg.mixer.Sound("sounds\hit.wav")
-hit_sound.set_volume(0.5)
 
 # Звук "быстрого убийства"
 cow_died = pg.mixer.Sound("sounds\cow_died.wav")
+
+volume = True  # Состояние вкл/выкл звуковых эффектов
 
 
 # Функция для загрузки спрайтов
@@ -68,6 +65,23 @@ def load_image(name, colorkey=None):
             colorkey = image.get_at((0, 0))
         image.set_colorkey(colorkey)
     return image
+
+
+# Проверка выключенных или включенных эффектов
+def enable_sfx():
+    if volume:
+        hit_sound.set_volume(0.5)
+        entities_destroy.set_volume(0.4)
+        world_cut_sound.set_volume(7.0)
+        pick_up_sound.set_volume(1)
+        cow_died.set_volume(1)
+        click_sound.set_volume(0.4)
+    else:
+        hit_sound.set_volume(0)
+        entities_destroy.set_volume(0)
+        pick_up_sound.set_volume(0)
+        cow_died.set_volume(0)
+        click_sound.set_volume(0)
 
 
 # Словарь спрайтов игрового мира
@@ -128,6 +142,7 @@ class Menu:
         pg.mouse.set_visible(True)  # Сделать мышь видимой
 
     def run(self):
+        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         self.running = True
         # Начать игру, Результаты, Настройки и Выход
         start_game = menu_text.render("Start Game", 0, (100, 100, 100))
@@ -185,8 +200,8 @@ class Menu:
                         click_sound.play()
                         Score().run()
                     if settings_rect.collidepoint(event.pos):
-                        print(2)
                         click_sound.play()
+                        Settings().run()
                     if exit_rect.collidepoint(event.pos):
                         # Выход из игры
                         click_sound.play()
@@ -265,10 +280,11 @@ class Level:
         open_menu()
 
 
+# Результаты
 class Score:
     def __init__(self):
         self.running = True
-        self.score_list = []
+        self.score_list = []  # Лист рекордов
 
     def decoder(self, score):
         # Перекордировщик для честности
@@ -317,7 +333,7 @@ class Score:
     def run(self):
         # Заголовок Результаты
         score_title = menu_text.render("TOP 5 SPEEDRUNS:", 0, (255, 255, 255))
-
+        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         while self.running:
             for event in pg.event.get():
                 # Выход из игры, при закрытии окна
@@ -346,6 +362,74 @@ class Score:
         open_menu()
 
 
+# Настройки
+class Settings:
+    def __init__(self):
+        self.running = True  # Когда окно действует
+
+    def run(self):
+        global volume  # Чтобы изменять громкость повсюду
+        # Заголовок Настроек, Звуковых эффектов и Сброса Результатов
+        settings_title = menu_text.render("SETTINGS", 0, (255, 255, 255))
+
+        volume_title = menu_text.render(
+            "SOUND EFFECTS: ON", 0, (255, 255, 255))
+        volume_rect = volume_title.get_rect().move(80, 200)
+
+        record_title = menu_text.render("RESET SCORES", 0, (255, 255, 255))
+        record_rect = record_title.get_rect().move(80, 300)
+
+        while self.running:
+            for event in pg.event.get():
+                # Выход из игры, при закрытии окна
+                if event.type == pg.QUIT:
+                    quit()
+                    self.running = False
+
+                # Выход из игры нажатием ESC
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        self.running = False
+
+                # Когда кликаем на текст про звуковые эффекты
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    if volume_rect.collidepoint(event.pos):
+                        # Смена звуковых эффектов
+                        click_sound.play()
+                        if volume:
+                            volume = False
+                        else:
+                            volume = True
+                        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
+
+                    if record_rect.collidepoint(event.pos):
+                        # Сброс результатов
+                        click_sound.play()
+                        open('score.txt', 'w').close()
+            # Настройки звука, соотвествующий текст показывают
+            if volume:
+                volume_title = menu_text.render(
+                    "SOUND EFFECTS: ON", 0, (255, 255, 255))
+            else:
+                volume_title = menu_text.render(
+                    "SOUND EFFECTS: OFF", 0, (255, 255, 255))
+            # Логотип игры
+            image = load_image("logo.png")
+            image = pg.transform.scale(image, (144, 196))
+
+            # Обновления кадра, путем заливки
+            screen.fill((0, 0, 0))
+            # Добавить спрайты на экран
+            screen.blit(image, (400, 150))
+            screen.blit(settings_title, (80, 100))
+            screen.blit(volume_title, (80, 200))
+            screen.blit(record_title, (80, 300))
+            # Обновление кадра
+            pg.display.flip()
+        # Перейти в меню
+        open_menu()
+
+
 # Туториал для игрового мира
 class Tutorial_Terrain:
     def __init__(self):
@@ -356,6 +440,7 @@ class Tutorial_Terrain:
         self.show = False
 
     def run(self):
+        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         while self.running:
             for event in pg.event.get():
                 # Закрытие окна
@@ -403,6 +488,7 @@ class Start_Menu:
         self.difficult = ""  # Сложность игры
 
     def run(self):
+        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         self.running = True
         # Персонаж Мартин и его прямоугольная маска
         martin_txt = start_menu_text.render("MARTIN", 0, (100, 100, 100))
@@ -598,7 +684,6 @@ class Win:
         # Кодирование результатов и запись
         writing_score = self.coder(self.score)
         output_score.write(str(writing_score) + "\n")
-        output_score.close()
         while self.running:
             for event in pg.event.get():
                 # Закрытие окна
@@ -998,6 +1083,7 @@ class Game:
                 self.inventory.inv[0][index1] = 0
 
     def run(self):
+        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         # Загружаю мир и инвентарь
         self.world.render()
         self.inventory.render()
@@ -2144,6 +2230,7 @@ class Secret_Level:
                 del self.drop[self.tmplist[i]]
 
     def run(self):
+        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         inventory_group.empty()
         # Загружаю мир и инвентарь
         Secret_Tile('bath', 30, 30, self.player)
