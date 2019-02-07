@@ -1092,6 +1092,194 @@ class Game:
                 self.inventory.invtmp.remove(self.inventory.inv[0][index1])
                 self.inventory.inv[0][index1] = 0
 
+    def create_object(self, y, xl, xr):
+        for i in range(self.inventory.w):
+            # Если в инвентаре есть мясной блок
+            # И курсор находится на его позиции
+            if self.inventory.inv[0][i] == "meat_block":
+                if self.current_cursor_pos == i:
+                    # Установка блока в зависимости
+                    # От положения игрока
+                    if self.player.mirrored:
+                        if self.world.entities[y][xr] < 5:
+                            self.world.entities[y][xr] = 5
+                            self.world.render()
+                            entities_group.update()
+                            self.put_block("meat_block")
+                    else:
+                        if self.world.entities[y][xl] < 5:
+                            self.world.entities[y][xl] = 5
+                            self.world.render()
+                            entities_group.update()
+                            self.put_block("meat_block")
+
+            # Если в инвентаре есть золотой меч
+            # И курсор находится на его позиции
+            if self.inventory.inv[0][i] == "gold_sword":
+                if self.current_cursor_pos == i:
+                    # Установка блока в зависимости
+                    # От положения игрока
+                    if self.player.mirrored:
+                        if self.world.entities[y][xr] < 5:
+                            self.world.entities[y][xr] = 6
+                            self.world.render()
+                            entities_group.update()
+                            self.put_block("gold_sword")
+                    else:
+                        if self.world.entities[y][xl] < 5:
+                            self.world.entities[y][xl] = 6
+                            self.world.render()
+                            entities_group.update()
+                            self.put_block("gold_sword")
+
+            # Если в инвентаре есть серебрянный меч
+            # И курсор находится на его позиции
+            if self.inventory.inv[0][i] == "silver_sword":
+                if self.current_cursor_pos == i:
+                    # Установка блока в зависимости
+                    # От положения игрока
+                    if self.player.mirrored:
+                        if self.world.entities[y][xr] < 5:
+                            self.world.entities[y][xr] = 7
+                            self.world.render()
+                            entities_group.update()
+                            self.put_block("silver_sword")
+                    else:
+                        if self.world.entities[y][xl] < 5:
+                            self.world.entities[y][xl] = 7
+                            self.world.render()
+                            entities_group.update()
+                            self.put_block("silver_sword")
+
+    def destroy_object(self, x, y, xl, xr, yu, yd):
+        ifdestroy = False  # Флаг разрушенности блоков
+        # Слева, если это природные объекты
+        if 0 < self.world.entities[y][xl] < 5:
+            self.world.entities[y][xl] = 0
+            self.append_drop(xl, y)
+            ifdestroy = True
+
+        # Слева, если это мясной блок
+        if self.world.entities[y][xl] == 5:
+            self.world.entities[y][xl] = 0
+            self.append_drop_block(xl, y, 5)
+            ifdestroy = True
+
+        # Слева, если это золотой меч
+        if self.world.entities[y][xl] == 6:
+            self.world.entities[y][xl] = 0
+            self.append_drop_block(xl, y, 6)
+            ifdestroy = True
+
+        # Слева, если это серебрянный меч
+        if self.world.entities[y][xl] == 7:
+            self.world.entities[y][xl] = 0
+            self.append_drop_block(xl, y, 7)
+            ifdestroy = True
+
+        # Вправо, если это природные объекты
+        if 0 < self.world.entities[y][xr] < 5:
+            self.world.entities[y][xr] = 0
+            self.append_drop(xr, y)
+            ifdestroy = True
+
+        # Вправо, если это мясной блок
+        if self.world.entities[y][xr] == 5:
+            self.world.entities[y][xr] = 0
+            self.append_drop_block(xr, y, 5)
+            ifdestroy = True
+
+        # Вправо, если это золотой меч
+        if self.world.entities[y][xr] == 6:
+            self.world.entities[y][xr] = 0
+            self.append_drop_block(xr, y, 6)
+            ifdestroy = True
+
+        # Вправо, если это серебрянный меч
+        if self.world.entities[y][xr] == 7:
+            self.world.entities[y][xr] = 0
+            self.append_drop_block(xr, y, 7)
+            ifdestroy = True
+
+        # Снизу, если это природные объекты
+        if 0 < self.world.entities[yd][x] < 5:
+            self.world.entities[yd][x] = 0
+            self.append_drop(x, yd)
+            ifdestroy = True
+        # Снизу, если это мясной блок
+        if self.world.entities[yd][x] == 5:
+            self.world.entities[yd][x] = 0
+            self.append_drop_block(x, yd, 5)
+            ifdestroy = True
+
+        # Снизу, если это золотой меч
+        if self.world.entities[yd][x] == 6:
+            self.world.entities[yd][x] = 0
+            self.append_drop_block(x, yd, 6)
+            ifdestroy = True
+
+        # Снизу, если это серебрянный меч
+        if self.world.entities[yd][x] == 7:
+            self.world.entities[yd][x] = 0
+            self.append_drop_block(x, yd, 7)
+            ifdestroy = True
+
+        # Сверху, если это природные объекты
+        if 0 < self.world.entities[yu][x] < 5:
+            self.world.entities[yu][x] = 0
+            self.append_drop(x, yu)
+            ifdestroy = True
+
+        # Сверху, если это мясной блок
+        if self.world.entities[yu][x] == 5:
+            self.world.entities[yu][x] = 0
+            self.append_drop_block(x, yu, 5)
+            ifdestroy = True
+
+        # Сверху, если это золотой меч
+        if self.world.entities[yu][x] == 6:
+            self.world.entities[yu][x] = 0
+            self.append_drop_block(x, yu, 6)
+            ifdestroy = True
+
+        # Сверху, если это серебрянный меч
+        if self.world.entities[yu][x] == 7:
+            self.world.entities[yu][x] = 0
+            self.append_drop_block(x, yu, 7)
+            ifdestroy = True
+
+        # По центру, если это природные объекты
+        if 0 < self.world.entities[y][x] < 5:
+            self.world.entities[y][x] = 0
+            self.append_drop(x, y)
+            ifdestroy = True
+
+        # По центру, если это мясной блок
+        if self.world.entities[y][x] == 5:
+            self.world.entities[y][x] = 0
+            self.append_drop_block(x, y, 5)
+            ifdestroy = True
+
+        # По центру, если это золотой меч
+        if self.world.entities[y][x] == 6:
+            self.world.entities[y][x] = 0
+            self.append_drop_block(x, y, 6)
+            ifdestroy = True
+
+        # По центру, если это серебрянный меч
+        if self.world.entities[y][x] == 7:
+            self.world.entities[y][x] = 0
+            self.append_drop_block(x, y, 7)
+            ifdestroy = True
+
+        # Само уничтожение
+        if ifdestroy:
+            # Обновление групп спрайтов и мира
+            self.world.render()
+            entities_destroy.play()
+            entities_group.update()
+            drop_group.update()
+
     def run(self):
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         # Загружаю мир и инвентарь
@@ -1184,193 +1372,12 @@ class Game:
 
                         #  Уничтожение блоков
                         if event.key == pg.K_SPACE:
-                            ifdestroy = False  # Флаг разрушенности блоков
-                            # Слева, если это природные объекты
-                            if 0 < self.world.entities[y][xl] < 5:
-                                self.world.entities[y][xl] = 0
-                                self.append_drop(xl, y)
-                                ifdestroy = True
-
-                            # Слева, если это мясной блок
-                            if self.world.entities[y][xl] == 5:
-                                self.world.entities[y][xl] = 0
-                                self.append_drop_block(xl, y, 5)
-                                ifdestroy = True
-
-                            # Слева, если это золотой меч
-                            if self.world.entities[y][xl] == 6:
-                                self.world.entities[y][xl] = 0
-                                self.append_drop_block(xl, y, 6)
-                                ifdestroy = True
-
-                            # Слева, если это серебрянный меч
-                            if self.world.entities[y][xl] == 7:
-                                self.world.entities[y][xl] = 0
-                                self.append_drop_block(xl, y, 7)
-                                ifdestroy = True
-
-                            # Вправо, если это природные объекты
-                            if 0 < self.world.entities[y][xr] < 5:
-                                self.world.entities[y][xr] = 0
-                                self.append_drop(xr, y)
-                                ifdestroy = True
-
-                            # Вправо, если это мясной блок
-                            if self.world.entities[y][xr] == 5:
-                                self.world.entities[y][xr] = 0
-                                self.append_drop_block(xr, y, 5)
-                                ifdestroy = True
-
-                            # Вправо, если это золотой меч
-                            if self.world.entities[y][xr] == 6:
-                                self.world.entities[y][xr] = 0
-                                self.append_drop_block(xr, y, 6)
-                                ifdestroy = True
-
-                            # Вправо, если это серебрянный меч
-                            if self.world.entities[y][xr] == 7:
-                                self.world.entities[y][xr] = 0
-                                self.append_drop_block(xr, y, 7)
-                                ifdestroy = True
-
-                            # Снизу, если это природные объекты
-                            if 0 < self.world.entities[yd][x] < 5:
-                                self.world.entities[yd][x] = 0
-                                self.append_drop(x, yd)
-                                ifdestroy = True
-                            # Снизу, если это мясной блок
-                            if self.world.entities[yd][x] == 5:
-                                self.world.entities[yd][x] = 0
-                                self.append_drop_block(x, yd, 5)
-                                ifdestroy = True
-
-                            # Снизу, если это золотой меч
-                            if self.world.entities[yd][x] == 6:
-                                self.world.entities[yd][x] = 0
-                                self.append_drop_block(x, yd, 6)
-                                ifdestroy = True
-
-                            # Снизу, если это серебрянный меч
-                            if self.world.entities[yd][x] == 7:
-                                self.world.entities[yd][x] = 0
-                                self.append_drop_block(x, yd, 7)
-                                ifdestroy = True
-
-                            # Сверху, если это природные объекты
-                            if 0 < self.world.entities[yu][x] < 5:
-                                self.world.entities[yu][x] = 0
-                                self.append_drop(x, yu)
-                                ifdestroy = True
-
-                            # Сверху, если это мясной блок
-                            if self.world.entities[yu][x] == 5:
-                                self.world.entities[yu][x] = 0
-                                self.append_drop_block(x, yu, 5)
-                                ifdestroy = True
-
-                            # Сверху, если это золотой меч
-                            if self.world.entities[yu][x] == 6:
-                                self.world.entities[yu][x] = 0
-                                self.append_drop_block(x, yu, 6)
-                                ifdestroy = True
-
-                            # Сверху, если это серебрянный меч
-                            if self.world.entities[yu][x] == 7:
-                                self.world.entities[yu][x] = 0
-                                self.append_drop_block(x, yu, 7)
-                                ifdestroy = True
-
-                            # По центру, если это природные объекты
-                            if 0 < self.world.entities[y][x] < 5:
-                                self.world.entities[y][x] = 0
-                                self.append_drop(x, y)
-                                ifdestroy = True
-
-                            # По центру, если это мясной блок
-                            if self.world.entities[y][x] == 5:
-                                self.world.entities[y][x] = 0
-                                self.append_drop_block(x, y, 5)
-                                ifdestroy = True
-
-                            # По центру, если это золотой меч
-                            if self.world.entities[y][x] == 6:
-                                self.world.entities[y][x] = 0
-                                self.append_drop_block(x, y, 6)
-                                ifdestroy = True
-
-                            # По центру, если это серебрянный меч
-                            if self.world.entities[y][x] == 7:
-                                self.world.entities[y][x] = 0
-                                self.append_drop_block(x, y, 7)
-                                ifdestroy = True
-
-                            # Само уничтожение
-                            if ifdestroy:
-                                # Обновление групп спрайтов и мира
-                                self.world.render()
-                                entities_destroy.play()
-                                entities_group.update()
-                                drop_group.update()
+                            self.destroy_object(x, y, xl, xr, yu, yd)
 
                         # Установка блоков
                         if event.key == pg.K_m:
-                            for i in range(self.inventory.w):
-                                # Если в инвентаре есть мясной блок
-                                # И курсор находится на его позиции
-                                if self.inventory.inv[0][i] == "meat_block":
-                                    if self.current_cursor_pos == i:
-                                        # Установка блока в зависимости
-                                        # От положения игрока
-                                        if self.player.mirrored:
-                                            if self.world.entities[y][xr] < 5:
-                                                self.world.entities[y][xr] = 5
-                                                self.world.render()
-                                                entities_group.update()
-                                                self.put_block("meat_block")
-                                        else:
-                                            if self.world.entities[y][xl] < 5:
-                                                self.world.entities[y][xl] = 5
-                                                self.world.render()
-                                                entities_group.update()
-                                                self.put_block("meat_block")
+                            self.create_object(y, xl, xr)
 
-                                # Если в инвентаре есть золотой меч
-                                # И курсор находится на его позиции
-                                if self.inventory.inv[0][i] == "gold_sword":
-                                    if self.current_cursor_pos == i:
-                                        # Установка блока в зависимости
-                                        # От положения игрока
-                                        if self.player.mirrored:
-                                            if self.world.entities[y][xr] < 5:
-                                                self.world.entities[y][xr] = 6
-                                                self.world.render()
-                                                entities_group.update()
-                                                self.put_block("gold_sword")
-                                        else:
-                                            if self.world.entities[y][xl] < 5:
-                                                self.world.entities[y][xl] = 6
-                                                self.world.render()
-                                                entities_group.update()
-                                                self.put_block("gold_sword")
-
-                                # Если в инвентаре есть серебрянный меч
-                                # И курсор находится на его позиции
-                                if self.inventory.inv[0][i] == "silver_sword":
-                                    if self.current_cursor_pos == i:
-                                        # Установка блока в зависимости
-                                        # От положения игрока
-                                        if self.player.mirrored:
-                                            if self.world.entities[y][xr] < 5:
-                                                self.world.entities[y][xr] = 7
-                                                self.world.render()
-                                                entities_group.update()
-                                                self.put_block("silver_sword")
-                                        else:
-                                            if self.world.entities[y][xl] < 5:
-                                                self.world.entities[y][xl] = 7
-                                                self.world.render()
-                                                entities_group.update()
-                                                self.put_block("silver_sword")
                         # Смена инструмента
                         if event.key == pg.K_o:
                             # Если был топор, станут ножницы
