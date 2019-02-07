@@ -20,7 +20,8 @@ pg.display.set_icon(pg.image.load("sprites/icon.png"))
 screen = pg.display.set_mode((640, 512))
 pg.key.set_repeat(500, 10)
 
-# Два варианта текста, которых достаточно для оформления меню
+# Три варианта текста, которых достаточно для оформления меню
+logo_text = pg.font.Font('cyr.ttf', 72)
 menu_text = pg.font.Font('cyr.ttf', 36)
 start_menu_text = pg.font.Font('cyr.ttf', 48)
 
@@ -191,6 +192,8 @@ class Menu:
         pg.mouse.set_visible(True)  # Сделать мышь видимой
 
     def run(self):
+        game_logo_text = logo_text.render("H.O.S.T.A.G.E.",
+                                          0, (255, 255, 255))
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         # Начать игру, Результаты, Настройки и Выход
         start_game = menu_text.render("Start Game", 0, (100, 100, 100))
@@ -267,6 +270,7 @@ class Menu:
             screen.blit(record_txt, (80, 200))
             screen.blit(settings_txt, (80, 250))
             screen.blit(exit_txt, (80, 300))
+            screen.blit(game_logo_text, (80, 30))
             # Обновление кадра
             pg.display.flip()
         # Выход из игры
@@ -482,7 +486,7 @@ class TutorialTerrain:
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     # Переключение слайдов
-                    if self.slide < 7:
+                    if self.slide < 9:
                         # Конечный слайд заменяется на первый
                         self.slide += 1
                     else:
