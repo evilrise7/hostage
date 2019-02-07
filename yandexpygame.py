@@ -705,6 +705,7 @@ class Win:
         # Кодирование результатов и запись
         writing_score = coder(self.score)
         output_score.write(str(writing_score) + "\n")
+        output_score.close()
         while self.running:
             for event in pg.event.get():
                 # Закрытие окна
@@ -940,35 +941,17 @@ class Game:
         for i in range(len(self.mobs)):
             # Если животное касается границ, то оно отлетает
             if self.mobs[i].rect.x < 64 * self.step:
-                self.mobs[i].vx += 8
+                self.mobs[i].vx = 0
+                self.mobs[i].vx += 72
             if self.mobs[i].rect.x > 64 * (65 - self.step):
-                self.mobs[i].vx -= 8
+                self.mobs[i].vx = 0
+                self.mobs[i].vx -= 72
             if self.mobs[i].rect.y < 64 * self.step:
-                self.mobs[i].vy += 8
+                self.mobs[i].vy = 0
+                self.mobs[i].vy += 72
             if self.mobs[i].rect.y > 64 * (65 - self.step):
-                self.mobs[i].vy -= 8
-
-        for i in range(len(self.mobs)):
-            for j in range(len(self.mobs)):
-                if self.mobs[i] != self.mobs[j]:
-                    # Если животное касается других, то оно отлетает
-                    if self.mobs[i].rect.collidepoint(
-                            self.mobs[j].rect.topleft):
-                        if self.mobs[i].rect.x + 32 < self.mobs[j].rect.x:
-                            self.mobs[i].vy += 5
-                            self.mobs[j].vy -= 5
-
-                        if self.mobs[i].rect.x + 32 > self.mobs[j].rect.x:
-                            self.mobs[i].vy -= 5
-                            self.mobs[j].vy += 5
-
-                        if self.mobs[i].rect.y + 32 < self.mobs[j].rect.y:
-                            self.mobs[i].vy += 5
-                            self.mobs[j].vy -= 5
-
-                        if self.mobs[i].rect.y + 32 > self.mobs[j].rect.y:
-                            self.mobs[i].vy -= 5
-                            self.mobs[j].vy += 5
+                self.mobs[i].vy = 0
+                self.mobs[i].vy -= 72
 
     def append_drop(self, x, y):
         b = random.randint(0, 100)  # Вероятность выпадения M-го предмета
