@@ -82,3 +82,5 @@ EXPERT - 16 клеток в минуту
 ВСЕ СПРАЙТЫ СДЕЛАНЫ МНОЮ
 ВСЕ ЗВУКИ ДЛЯ ИГРЫ БЫЛИ СГЕНЕРИРОВАНЫ ЧЕРЕЗ ОНЛАЙН ПРОГРАММЫ
 ```
+## Автор игры
+* **Nurmakhan Bakhtiyar** - *ULTRABAKHA* - [evil_rise7](https://github.com/evilrise7)
