@@ -1,17 +1,20 @@
-import pygame as pg
+# Надо их по иерхархии типа выстраивать, по комментариям Алексея.
 import os
 import sys
 import random
 import datetime
 
+import pygame as pg
 
+# Чтобы окно появлялось по середине экрана
+os.environ['SDL_VIDEO_CENTERED'] = '1'
 # Инициализация PyGame(назвал, как pg, чтобы укоротить и не получить PEP8)
 pg.init()
 pg.mixer.init()
 
 # Название и иконка игры
 pg.display.set_caption("Hell Obtained Sensible Tiny And Geniusly Emmy.")
-pg.display.set_icon(pg.image.load("sprites\icon.png"))
+pg.display.set_icon(pg.image.load("sprites/icon.png"))
 
 # Разрешение экрана и залипание клавиш(для передвижения игрока в игре)
 screen = pg.display.set_mode((640, 512))
@@ -31,22 +34,22 @@ drop_group = pg.sprite.Group()
 animal_group = pg.sprite.Group()
 
 # Звук клика в меню
-click_sound = pg.mixer.Sound("sounds\walk.wav")
+click_sound = pg.mixer.Sound("sounds/walk.wav")
 
 # Звук подбора вещей в игре
-pick_up_sound = pg.mixer.Sound("sounds\pickup.wav")
+pick_up_sound = pg.mixer.Sound("sounds/pickup.wav")
 
 # Звук пожирания мира
-world_cut_sound = pg.mixer.Sound("sounds\cut.wav")
+world_cut_sound = pg.mixer.Sound("sounds/cut.wav")
 
 # Звук уничтожения природных объектов(трава, камень, цветки и кусты)
-entities_destroy = pg.mixer.Sound("sounds\pick.wav")
+entities_destroy = pg.mixer.Sound("sounds/pick.wav")
 
 # Звук удара коровки
-hit_sound = pg.mixer.Sound("sounds\hit.wav")
+hit_sound = pg.mixer.Sound("sounds/hit.wav")
 
 # Звук "быстрого убийства"
-cow_died = pg.mixer.Sound("sounds\cow_died.wav")
+cow_died = pg.mixer.Sound("sounds/cow_died.wav")
 
 volume = True  # Состояние вкл/выкл звуковых эффектов
 
@@ -84,6 +87,48 @@ def enable_sfx():
         click_sound.set_volume(0)
 
 
+# Перезагрузка/Очистка всех групп спрайтов
+def clear_tiles():
+    entities_group.empty()
+    tiles_group.empty()
+    all_sprites.empty()
+    animal_group.empty()
+    drop_group.empty()
+    inventory_group.empty()
+
+
+# Кордировщик для честности
+def coder(score_output):
+    score_output = score_output.replace("0", "Z")
+    score_output = score_output.replace("1", "#")
+    score_output = score_output.replace("2", "@")
+    score_output = score_output.replace("3", "B")
+    score_output = score_output.replace("4", "F")
+    score_output = score_output.replace("5", "D")
+    score_output = score_output.replace("6", "U")
+    score_output = score_output.replace("7", "E")
+    score_output = score_output.replace("8", "X")
+    score_output = score_output.replace("9", "M")
+    score_output = score_output.replace(":", "/")
+    return score_output
+
+
+# Перекордировщик для честности
+def decoder(score_input):
+    score_input = score_input.replace("Z", "0")
+    score_input = score_input.replace("#", "1")
+    score_input = score_input.replace("@", "2")
+    score_input = score_input.replace("B", "3")
+    score_input = score_input.replace("F", "4")
+    score_input = score_input.replace("D", "5")
+    score_input = score_input.replace("U", "6")
+    score_input = score_input.replace("E", "7")
+    score_input = score_input.replace("X", "8")
+    score_input = score_input.replace("M", "9")
+    score_input = score_input.replace("/", ":")
+    return score_input
+
+
 # Словарь спрайтов игрового мира
 tile_images = {"grass": load_image('grass.png'),
                "sand": load_image('sand.png'),
@@ -108,7 +153,8 @@ entity_images = {"green": load_image('green.png'),
                  "bush": load_image('bush.png'),
                  "meat": load_image('meat_entity.png'),
                  "gold_sword": load_image('gold_sword_entity.png'),
-                 "silver_sword": load_image('silver_sword_entity.png')}
+                 "silver_sword": load_image('silver_sword_entity.png'),
+                 "blood": load_image('blood_entity.png')}
 
 # Словарь спрайтов инвентаря
 inventory_images = {"empty": load_image('empty.png'),
@@ -134,16 +180,18 @@ drop_images = {"meat": load_image('meat.png'),
 
 # Переменная отвечает за запуск секретного уровня
 psycho_level = 0
+# Переменная ограничитель для частиц
+screen_rect = (0, 0, 4224, 4224)
 
 
 # Класс меню
 class Menu:
     def __init__(self):
+        self.running = True
         pg.mouse.set_visible(True)  # Сделать мышь видимой
 
     def run(self):
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
-        self.running = True
         # Начать игру, Результаты, Настройки и Выход
         start_game = menu_text.render("Start Game", 0, (100, 100, 100))
         start_game_rect = start_game.get_rect().move(80, 150)
@@ -229,10 +277,8 @@ class Menu:
 # Выбор уровней
 class Level:
     def __init__(self):
-        self.level = psycho_level  # Проверка секретного уровня
-
-    def run(self):
         self.running = True
+        self.level = psycho_level  # Проверка секретного уровня
         # Загрузка спрайтов выбора уровней
         self.level_terrain = load_image("level1.png")
         self.level_secret = load_image("level2.png")
@@ -241,11 +287,12 @@ class Level:
         self.level_terrain_rect = self.level_terrain.get_rect().move(0, 120)
         self.level_secret_rect = self.level_secret.get_rect().move(320, 120)
 
+    def run(self):
         while self.running:
             for event in pg.event.get():
                 # Закрытие экрана
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
@@ -257,12 +304,12 @@ class Level:
                     # Запустить обычный игровой мир
                     if self.level_terrain_rect.collidepoint(event.pos):
                         click_sound.play()
-                        Tutorial_Terrain().run()
+                        TutorialTerrain().run()
                     # Запустить секретный уровень
                     if self.level_secret_rect.collidepoint(
                             event.pos) and self.level == 1:
                         click_sound.play()
-                        Secret_Level().run()
+                        SecretLevel().run()
 
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
@@ -286,21 +333,6 @@ class Score:
         self.running = True
         self.score_list = []  # Лист рекордов
 
-    def decoder(self, score):
-        # Перекордировщик для честности
-        score = score.replace("Z", "0")
-        score = score.replace("#", "1")
-        score = score.replace("@", "2")
-        score = score.replace("B", "3")
-        score = score.replace("F", "4")
-        score = score.replace("D", "5")
-        score = score.replace("U", "6")
-        score = score.replace("E", "7")
-        score = score.replace("X", "8")
-        score = score.replace("M", "9")
-        score = score.replace("/", ":")
-        return score
-
     def top5scores(self):
         # Отступ для рекордов
         liney = 160
@@ -323,7 +355,7 @@ class Score:
 
             for i in range(len(self.score_list)):
                 # Перекодировщик рекорда
-                self.score_list[i] = self.decoder(self.score_list[i])
+                self.score_list[i] = decoder(self.score_list[i])
                 # Добавления самих рекордов
                 screen.blit(menu_text.render(
                     str(i + 1) + ". " + str(self.score_list[i]),
@@ -338,7 +370,7 @@ class Score:
             for event in pg.event.get():
                 # Выход из игры, при закрытии окна
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 # Выход из игры нажатием ESC
@@ -383,7 +415,7 @@ class Settings:
             for event in pg.event.get():
                 # Выход из игры, при закрытии окна
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 # Выход из игры нажатием ESC
@@ -431,7 +463,7 @@ class Settings:
 
 
 # Туториал для игрового мира
-class Tutorial_Terrain:
+class TutorialTerrain:
     def __init__(self):
         self.running = True
         self.slide = 1  # Текущий слайд туториала
@@ -445,7 +477,7 @@ class Tutorial_Terrain:
             for event in pg.event.get():
                 # Закрытие окна
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 if event.type == pg.MOUSEBUTTONDOWN:
@@ -466,7 +498,7 @@ class Tutorial_Terrain:
                     # любая другая кнопка, активирует меню персонажа
                     else:
                         click_sound.play()
-                        Start_Menu().run()
+                        StartMenu().run()
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             # Добавление слайдов
@@ -482,14 +514,14 @@ class Tutorial_Terrain:
 
 
 # Меню выбора персонажей
-class Start_Menu:
+class StartMenu:
     def __init__(self):
+        self.running = True
         self.gender = ""    # Половая принадлежность
         self.difficult = ""  # Сложность игры
 
     def run(self):
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
-        self.running = True
         # Персонаж Мартин и его прямоугольная маска
         martin_txt = start_menu_text.render("MARTIN", 0, (100, 100, 100))
         martin_rect = martin_txt.get_rect().move(100, 280)
@@ -532,7 +564,7 @@ class Start_Menu:
             for event in pg.event.get():
                 # Закрыть окно
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
@@ -624,7 +656,7 @@ class Start_Menu:
 
 
 # Окно проигрыша
-class Game_Over:
+class GameOver:
     def __init__(self):
         self.running = True
 
@@ -633,7 +665,7 @@ class Game_Over:
             for event in pg.event.get():
                 # Закрытие окна
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
@@ -660,35 +692,20 @@ class Game_Over:
 # Выигрыш игры
 class Win:
     def __init__(self, score):
+        self.running = True
         self.score = score  # Время прохождения игры
 
-    def coder(self, score_output):
-        # Кордировщик для честности
-        score_output = score_output.replace("0", "Z")
-        score_output = score_output.replace("1", "#")
-        score_output = score_output.replace("2", "@")
-        score_output = score_output.replace("3", "B")
-        score_output = score_output.replace("4", "F")
-        score_output = score_output.replace("5", "D")
-        score_output = score_output.replace("6", "U")
-        score_output = score_output.replace("7", "E")
-        score_output = score_output.replace("8", "X")
-        score_output = score_output.replace("9", "M")
-        score_output = score_output.replace(":", "/")
-        return score_output
-
     def run(self):
-        self.running = True
         # Запись результата в текстовый документ
         output_score = open("score.txt", "a")
         # Кодирование результатов и запись
-        writing_score = self.coder(self.score)
+        writing_score = coder(self.score)
         output_score.write(str(writing_score) + "\n")
         while self.running:
             for event in pg.event.get():
                 # Закрытие окна
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
@@ -712,31 +729,31 @@ class Win:
 
 
 # Выигрыш секретного уровня
-class Drowned_Children:
+class DrownedChildren:
     def __init__(self):
         self.running = True
 
     def run(self):
         # Загрузка объектов
-        child_D = load_image("child_D.png")
-        child_D = pg.transform.scale(child_D, (144, 144))
+        child_d = load_image("child_D.png")
+        child_d = pg.transform.scale(child_d, (144, 144))
 
-        child_R = load_image("child_R.png")
-        child_R = pg.transform.scale(child_R, (144, 144))
+        child_r = load_image("child_R.png")
+        child_r = pg.transform.scale(child_r, (144, 144))
 
-        child_O = load_image("child_O.png")
-        child_O = pg.transform.scale(child_O, (144, 144))
+        child_o = load_image("child_O.png")
+        child_o = pg.transform.scale(child_o, (144, 144))
 
-        child_W = load_image("child_W.png")
-        child_W = pg.transform.scale(child_W, (144, 144))
+        child_w = load_image("child_W.png")
+        child_w = pg.transform.scale(child_w, (144, 144))
 
-        child_N = load_image("child_N.png")
-        child_N = pg.transform.scale(child_N, (144, 144))
+        child_n = load_image("child_N.png")
+        child_n = pg.transform.scale(child_n, (144, 144))
         while self.running:
             for event in pg.event.get():
                 # Закрытие окна
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 if event.type == pg.KEYDOWN:
@@ -747,11 +764,11 @@ class Drowned_Children:
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             # Добавление объектов на экран
-            screen.blit(child_D, (60, 70))
-            screen.blit(child_R, (156, 70))
-            screen.blit(child_O, (252, 70))
-            screen.blit(child_W, (348, 70))
-            screen.blit(child_N, (444, 70))
+            screen.blit(child_d, (60, 70))
+            screen.blit(child_r, (156, 70))
+            screen.blit(child_o, (252, 70))
+            screen.blit(child_w, (348, 70))
+            screen.blit(child_n, (444, 70))
 
             screen.blit(start_menu_text.render("Congratulations!", 0,
                                                (255, 255, 255)), (130, 230))
@@ -770,8 +787,9 @@ class Drowned_Children:
 # Игровой мир (Уровень 1)
 class Game:
     def __init__(self, difficult="easy", boyorgirl="male"):
+        self.running = True
         # Очистить все поле, при старте новой игры
-        self.clear_tiles()
+        clear_tiles()
         # Текущий инструмент == Топор
         self.tool = "axe"
         # Пауза
@@ -830,6 +848,9 @@ class Game:
                                  self, random.randint(2, 62),
                                  random.randint(2, 62), 64))
         self.drop = []
+        self.tmpmobs = []  # Буферный лист живых существ
+        # Лист, чтобы прослеживать уже добавленные предметы
+        self.tmplist = []
 
         # Установка интервала пожирания границ мира,
         # в зависимости от сложности
@@ -839,17 +860,10 @@ class Game:
             self.cell_timer = 7.5
         if self.difficult == "hardcore":
             self.cell_timer = 3.75
-
+        # Загрузка курсора инвентаря и его позиция
         self.current_cursor_pos = 0
-
-    def clear_tiles(self):
-        # Перезагрузка/Очистка всех групп спрайтов
-        entities_group.empty()
-        tiles_group.empty()
-        all_sprites.empty()
-        animal_group.empty()
-        drop_group.empty()
-        inventory_group.empty()
+        self.cursor = load_image("cursor.png")
+        self.cursor = pg.transform.scale(self.cursor, (72, 72))
 
     def player_run(self):
         # Обработка бегающего игрока
@@ -983,16 +997,21 @@ class Game:
             self.drop.append(Drop("silver_sword", self.player, x, y, self))
 
     def cow_and_player(self):
-        self.tmpmobs = []  # Буферный лист живых существ
         for i in range(len(self.mobs)):
             # Если живое существо касается героя
             if self.mobs[i].rect.colliderect(self.player.rect):
+                # При применении насилия к животным(ну вы поняли)
+                # Появляются частицы крови.
                 # Если в руках топор, то у коровы отнимается 2 жизни
                 if self.tool == "axe":
+                    create_particles((self.player.rect.x + 32,
+                                      self.player.rect.y + 32))
                     self.mobs[i].hp -= 2
                     hit_sound.play()
                 # Если в руках ножницы, то у коровы отнимается 1 жизнь
                 else:
+                    create_particles((self.player.rect.x + 32,
+                                      self.player.rect.y + 32))
                     self.mobs[i].hp -= 1
                     hit_sound.play()
 
@@ -1014,6 +1033,10 @@ class Game:
                         self.drop.append(Drop("eyes", self.player, x, y, self))
                     # Буферный лист добавляет соотвествующее животное
                     self.tmpmobs.append(i)
+                    if self.world.entities[y][x] < 5:
+                        self.world.entities[y][x] = -2
+                        self.world.render()
+                        entities_group.update()
         # Если буферный лист заполнен,
         # то все животные в этом листе очищаются в основном
         if self.tmpmobs:
@@ -1087,7 +1110,6 @@ class Game:
         # Загружаю мир и инвентарь
         self.world.render()
         self.inventory.render()
-        self.running = True
 
         # Обновляю группы спрайтов
         tiles_group.update()
@@ -1103,13 +1125,6 @@ class Game:
 
         quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
         quit_rect = quit_txt.get_rect().move(60, 160)
-
-        # Лист, чтобы прослеживать уже добавленные предметы
-        self.tmplist = []
-
-        # Загрузка курсора инвентаря
-        self.cursor = load_image("cursor.png")
-        self.cursor = pg.transform.scale(self.cursor, (72, 72))
         while self.running:
             # Положение игрока внутри матрицы мира
             x = int((self.player.rect.x + 32) / 4096 * 64)
@@ -1141,7 +1156,7 @@ class Game:
             for event in pg.event.get():
                 # Закрытие окна
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
 
                 if event.type == pg.MOUSEMOTION:
@@ -1309,7 +1324,6 @@ class Game:
                                 entities_destroy.play()
                                 entities_group.update()
                                 drop_group.update()
-                                ifdestroy = False
 
                         # Установка блоков
                         if event.key == pg.K_m:
@@ -1459,7 +1473,7 @@ class Game:
             if not self.pause:
                 # Если весь мир сожран, то игра завершается с проигрышем
                 if self.step == 33:
-                    Game_Over().run()
+                    GameOver().run()
 
                 # Проверка положения коров
                 self.check_cows()
@@ -1504,7 +1518,7 @@ class Game:
                                     self.world.entities[j + 2][i + 2] == 5:
                                 global psycho_level
                                 psycho_level = 1
-                                Game_Over().run()
+                                GameOver().run()
 
                 # Обновить игрока и животных
                 animal_group.update()
@@ -1621,6 +1635,8 @@ class TileMap:
                 20% == Песок
                 20% == Камень
                 '''
+                if self.entities[j][i] == -2:
+                    Entity('blood', i, j)
                 # Трава
                 if self.entities[j][i] == 1:
                     Entity('green', i, j)
@@ -1889,54 +1905,54 @@ class Inventory:
         for i in range(self.w):
             # Пустой слот
             if self.inv[0][i] == 0 or self.inv[1][i] == 0:
-                Inventory_Tile('empty', i)
+                InventoryTile('empty', i)
             # Слот с золотом
             if self.inv[0][i] == "gold" and self.inv[1][i] != 0:
-                Inventory_Tile('gold', i)
+                InventoryTile('gold', i)
             # Слот с серебрянным мечом
             if self.inv[0][i] == "silver_sword" and self.inv[1][i] != 0:
-                Inventory_Tile('silver_sword', i)
+                InventoryTile('silver_sword', i)
             # Слот с золотым мечом
             if self.inv[0][i] == "gold_sword" and self.inv[1][i] != 0:
-                Inventory_Tile('gold_sword', i)
+                InventoryTile('gold_sword', i)
             # Слот с мясом
             if self.inv[0][i] == "meat" and self.inv[1][i] != 0:
-                Inventory_Tile('meat', i)
+                InventoryTile('meat', i)
             # Слот с глазами
             if self.inv[0][i] == "eyes" and self.inv[1][i] != 0:
-                Inventory_Tile('eyes', i)
+                InventoryTile('eyes', i)
             # Слот с сухожилием
             if self.inv[0][i] == "meat_block" and self.inv[1][i] != 0:
-                Inventory_Tile('meat_block', i)
+                InventoryTile('meat_block', i)
             # Слот с жертвами
             if self.inv[0][i] == "victim1" and self.inv[1][i] != 0:
-                Inventory_Tile('victim1', i)
+                InventoryTile('victim1', i)
             if self.inv[0][i] == "victim2" and self.inv[1][i] != 0:
-                Inventory_Tile('victim2', i)
+                InventoryTile('victim2', i)
             if self.inv[0][i] == "victim3" and self.inv[1][i] != 0:
-                Inventory_Tile('victim3', i)
+                InventoryTile('victim3', i)
             if self.inv[0][i] == "victim4" and self.inv[1][i] != 0:
-                Inventory_Tile('victim4', i)
+                InventoryTile('victim4', i)
             if self.inv[0][i] == "victim5" and self.inv[1][i] != 0:
-                Inventory_Tile('victim5', i)
+                InventoryTile('victim5', i)
             # Добавление ячеек инвентаря на экран
             screen.blit(start_menu_text.render(str(self.inv[1][i]),
                                                0, (255, 255, 255)),
                         (284 + (i * 72), 72))
 
-    def append(self, type):
+    def append(self, type_obj):
         # Добавление вещей в инвентарь
         for i in range(self.w):
             # Если такого предмета нет в инвентаре, он попадает в новый слот
-            if type not in self.invtmp:
+            if type_obj not in self.invtmp:
                 if self.inv[0][i] == 0:
-                    self.inv[0][i] = type
+                    self.inv[0][i] = type_obj
                     self.inv[1][i] += 1
-                    self.invtmp.append(type)
+                    self.invtmp.append(type_obj)
             # Если такой предмет существует в инвентаре, он прибавляется
             else:
-                if self.inv[0][i] == type:
-                    self.inv[0][i] = type
+                if self.inv[0][i] == type_obj:
+                    self.inv[0][i] = type_obj
                     self.inv[1][i] += 1
 
     def check_craft_meat(self):
@@ -1984,7 +2000,7 @@ class Craft:
 
 
 # Ячейка инвентаря
-class Inventory_Tile(pg.sprite.Sprite):
+class InventoryTile(pg.sprite.Sprite):
     def __init__(self, types, x):
         super().__init__(inventory_group)
         self.cell_size = 72  # Размер ячейки
@@ -2032,6 +2048,37 @@ class Drop(pg.sprite.Sprite):
 
         if self.rect.y > 64 * (65 - self.step):
             return 1
+
+
+# Частицы крови
+class Blood(pg.sprite.Sprite):
+    fire = [load_image("blood.png")]
+    for scale in (5, 10, 20):
+        fire.append(pg.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость — это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой (значение константы)
+        self.gravity = 1
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
 
 
 # Коровка
@@ -2169,8 +2216,9 @@ class Cow(pg.sprite.Sprite):
 
 
 # Секретный уровень
-class Secret_Level:
+class SecretLevel:
     def __init__(self):
+        clear_tiles()
         self.step = 0  # За пределы карты, игрок не сможет выйти
         self.dt = 0  # Обновление времени внутри системы
         self.FPS = 100  # Кадры в секунду для оптимизации
@@ -2185,6 +2233,11 @@ class Secret_Level:
         # random.sample -  делает так, чтобы координаты не повторялись
         self.list_coordinates_victims = random.sample(range(1, 63), 10)
         self.screamer = 0  # Индикатор скримера
+        self.tmplist = []  # Буферный лист полотенец
+        # Скример
+        self.screamer_img = load_image("screamer.png")
+        # Затемненные края
+        self.overlay = load_image("overlay.png")
 
     def update_tiles(self):
         # Передвижение всех спрайтов вдоль камеры
@@ -2213,7 +2266,6 @@ class Secret_Level:
 
     def check_victims(self):
         # Проверка упавших полотенец и добавление их в инвентарь
-        self.tmplist = []  # Буферный лист полотенец
         # Если игрок касается полотенца, оно уничтожается,
         # а игрок получает в инвентарь соотвествующее полотенце
         if self.drop:
@@ -2233,24 +2285,24 @@ class Secret_Level:
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         inventory_group.empty()
         # Загружаю мир и инвентарь
-        Secret_Tile('bath', 30, 30, self.player)
-        Secret_Tile('shower', 31, 30, self.player)
-        Secret_Tile('left_eye', 29.5, 29, self.player)
-        Secret_Tile('right_eye', 30.5, 29, self.player)
+        SecretTile('bath', 30, 30, self.player)
+        SecretTile('shower', 31, 30, self.player)
+        SecretTile('left_eye', 29.5, 29, self.player)
+        SecretTile('right_eye', 30.5, 29, self.player)
         # Загружаю полотенца
-        self.list_victims = [Secret_Tile(
+        self.list_victims = [SecretTile(
             'victim1', self.list_coordinates_victims[0],
             self.list_coordinates_victims[1], self.player),
-                             Secret_Tile(
+                             SecretTile(
             'victim2', self.list_coordinates_victims[2],
             self.list_coordinates_victims[3], self.player),
-                             Secret_Tile(
+                             SecretTile(
             'victim3', self.list_coordinates_victims[4],
             self.list_coordinates_victims[5], self.player),
-                             Secret_Tile(
+                             SecretTile(
             'victim4', self.list_coordinates_victims[6],
             self.list_coordinates_victims[7], self.player),
-                             Secret_Tile(
+                             SecretTile(
             'victim5', self.list_coordinates_victims[8],
             self.list_coordinates_victims[9], self.player)]
         # Перезагружаю инвентарь
@@ -2264,10 +2316,6 @@ class Secret_Level:
 
         # Лист, чтобы прослеживать уже добавленные предметы
         self.tmplist = []
-        # Скример
-        self.screamer_img = load_image("screamer.png")
-        # Затемненные края
-        self.overlay = load_image("overlay.png")
         while self.running:
             # Обновление экрана путем заливки
             screen.fill((0, 0, 0))
@@ -2288,14 +2336,14 @@ class Secret_Level:
             for event in pg.event.get():
                 # Закрытие окна
                 if event.type == pg.QUIT:
-                    quit()
+                    game_quit()
                     self.running = False
                 if event.type == pg.KEYDOWN:
                     # Если все полотенца взяты, то при нажатии SPACE,
                     # игра завершается
                     if event.key == pg.K_SPACE:
                         if self.children <= 0:
-                            Drowned_Children().run()
+                            DrownedChildren().run()
             # Обновление игрока и инвентаря
             all_sprites.update()
             # Затемненные края добавить
@@ -2327,7 +2375,7 @@ class Secret_Level:
 
 
 # Ячейка спрайта игрового поля
-class Secret_Tile(pg.sprite.Sprite):
+class SecretTile(pg.sprite.Sprite):
     def __init__(self, types, x, y, player):
         super().__init__(secret_group)
         self.cell_size = 64  # Размер ячейки
@@ -2356,9 +2404,19 @@ def open_menu():
 
 
 # Функция выхода из игры, чтобы не было ошибок
-def quit():
+def game_quit():
     pg.quit()
     sys.exit()
+
+
+# Создание частиц
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 10
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Blood(position, random.choice(numbers), random.choice(numbers))
 
 
 # Сам запуск всей игры
