@@ -33,6 +33,7 @@ entities_group = pg.sprite.Group()
 inventory_group = pg.sprite.Group()
 drop_group = pg.sprite.Group()
 animal_group = pg.sprite.Group()
+particle_group = pg.sprite.Group()
 
 # Звук клика в меню
 click_sound = pg.mixer.Sound("sounds/walk.wav")
@@ -902,14 +903,41 @@ class Game:
         # Обновление всех спрайтов вдоль камеры
         for sprite in tiles_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
+
         for sprite in entities_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
+
         for sprite in animal_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
+
         for sprite in all_sprites:
+            pos = self.camera.apply(sprite)
+            # Отображаю инструмент игрока относительно него
+            if not sprite.mirrored:
+                tool_img = load_image("tool_" + str(self.tool) + ".png")
+                tool_img = pg.transform.scale(tool_img, (72, 72))
+                screen.blit(tool_img, (pos[0] - 28, pos[1] - 4))
+
+            if sprite.mirrored:
+                tool_img = load_image("toolm_" + str(self.tool) + ".png")
+                tool_img = pg.transform.scale(tool_img, (72, 72))
+                screen.blit(tool_img, (pos[0] + 24, pos[1] - 4))
+
             screen.blit(sprite.image, self.camera.apply(sprite))
+
+        for sprite in particle_group:
+            screen.blit(sprite.image, self.camera.apply(sprite))
+
         for sprite in drop_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
+
+        for sprite in animal_group:
+            # Отображаю жизни животных
+            pos = self.camera.apply(sprite)
+            if sprite.hp:
+                screen.blit(menu_text.render(
+                    str(sprite.hp) + "HP", 0, (255, 255, 255)),
+                    (pos[0], pos[1] - 40))
 
     def world_cutting(self):
         # Если таймер уничтожения границ больше, чем
@@ -1329,6 +1357,8 @@ class Game:
                 self.craft.craft_type = -1
                 self.craft_checking()
                 self.craft.render()
+                # Обновлене частиц
+                particle_group.update()
 
             for event in pg.event.get():
                 # Закрытие окна
@@ -2054,7 +2084,7 @@ class Blood(pg.sprite.Sprite):
         fire.append(pg.transform.scale(fire[0], (scale, scale)))
 
     def __init__(self, pos, dx, dy):
-        super().__init__(all_sprites)
+        super().__init__(particle_group)
         self.image = random.choice(self.fire)
         self.rect = self.image.get_rect()
 
@@ -2078,18 +2108,19 @@ class Blood(pg.sprite.Sprite):
             self.kill()
 
 
-# Коровка
+# Моя учительница по истории
 class Cow(pg.sprite.Sprite):
     def __init__(self, group, game, x, y, cell_size):
         super().__init__(group)
         self.game = game    # привязанный параметр текущей игры
         self.state = "stay"  # текущее положение, для анимации
         self.tmpstate = False  # буферное положение, для переключения анимации
-
+        self.type_obj = random.randint(0, 1)
         self.frames = []    # Лист кадров
         self.cur_frame = 0  # Текущий кадр
         self.mirrored = False  # Отразить коровку
-        self.cut_sheet(load_image("c_sheet.png"))   # Полотно спрайтов коровки
+        # Полотно спрайтов коровки
+        self.cut_sheet(load_image("c" + str(self.type_obj) + "_sheet.png"))
 
         self.image = self.frames[self.cur_frame]    # Картинка из листа
         self.size = self.image.get_size()   # Получить размер картинки
@@ -2154,9 +2185,9 @@ class Cow(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stay"
             if self.mirrored:
-                self.cut_sheet(load_image("cm_sheet.png"))
+                self.cut_sheet(load_image("cm" + str(self.type_obj) + "_sheet.png"))
             else:
-                self.cut_sheet(load_image("c_sheet.png"))
+                self.cut_sheet(load_image("c" + str(self.type_obj) + "_sheet.png"))
 
         # Если коровка идет налево
         if b == 1:
@@ -2181,9 +2212,9 @@ class Cow(pg.sprite.Sprite):
             self.state = "run"
             # Чтобы коровка могла смотреть по сторонам(отражение)
             if self.mirrored:
-                self.cut_sheet(load_image("cm_sheet.png"))
+                self.cut_sheet(load_image("cm" + str(self.type_obj) + "_sheet.png"))
             else:
-                self.cut_sheet(load_image("c_sheet.png"))
+                self.cut_sheet(load_image("c" + str(self.type_obj) + "_sheet.png"))
 
     def update(self):
         # Интервал между кадрами
