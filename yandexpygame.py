@@ -1032,6 +1032,26 @@ class Game:
                     self.mobs[i].hp -= 1
                     hit_sound.play()
 
+                # Проверка, куда бежать от игрока
+                if self.player.rect.y < self.mobs[i].rect.y:
+                    self.mobs[i].movement(4)
+
+                if self.player.rect.y > self.mobs[i].rect.y:
+                    self.mobs[i].movement(3)
+
+                if self.player.mirrored:
+                    self.mobs[i].movement(2)
+
+                if not self.player.mirrored:
+                    self.mobs[i].movement(1)
+
+                else:
+                    self.mobs[i].movement(random.randint(1, 4))
+
+                self.mobs[i].vx = 0
+                self.mobs[i].vy = 0
+                self.mobs[i].timer_run = 3
+
                 if self.mobs[i].check_hp():
                     # Беру координаты игрока, т.к. PEP8 ругался
                     # за то, что я писал длинные строки
@@ -2135,6 +2155,7 @@ class Cow(pg.sprite.Sprite):
 
         self.timer = 0  # Таймер переключения анимаций
         self.timer_choose_animation = 0  # Таймер свободного движения коровки
+        self.timer_run = 0
 
         self.x = x * cell_size  # Изначальное положение коровки на ось Ox
         self.y = y * cell_size  # Изначальное положение коровки на ось Oy
@@ -2217,6 +2238,12 @@ class Cow(pg.sprite.Sprite):
                 self.cut_sheet(load_image("c" + str(self.type_obj) + "_sheet.png"))
 
     def update(self):
+        # Таймер побега от игрока
+        if self.timer_run > 0:
+            self.timer_run -= self.game.dt
+            self.speed = 200
+        else:
+            self.speed = 100
         # Интервал между кадрами
         self.timer += self.game.dt
         # Интервал изменения направления
