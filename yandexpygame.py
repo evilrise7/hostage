@@ -105,11 +105,11 @@ def coder(score_output):
     score_output = score_output.replace("2", "@")
     score_output = score_output.replace("3", "B")
     score_output = score_output.replace("4", "F")
-    score_output = score_output.replace("5", "D")
-    score_output = score_output.replace("6", "U")
-    score_output = score_output.replace("7", "E")
+    score_output = score_output.replace("5", "T")
+    score_output = score_output.replace("6", "N")
+    score_output = score_output.replace("7", "Q")
     score_output = score_output.replace("8", "X")
-    score_output = score_output.replace("9", "M")
+    score_output = score_output.replace("9", "W")
     score_output = score_output.replace(":", "/")
     return score_output
 
@@ -121,11 +121,11 @@ def decoder(score_input):
     score_input = score_input.replace("@", "2")
     score_input = score_input.replace("B", "3")
     score_input = score_input.replace("F", "4")
-    score_input = score_input.replace("D", "5")
-    score_input = score_input.replace("U", "6")
-    score_input = score_input.replace("E", "7")
+    score_input = score_input.replace("T", "5")
+    score_input = score_input.replace("N", "6")
+    score_input = score_input.replace("Q", "7")
     score_input = score_input.replace("X", "8")
-    score_input = score_input.replace("M", "9")
+    score_input = score_input.replace("W", "9")
     score_input = score_input.replace("/", ":")
     return score_input
 
@@ -695,16 +695,18 @@ class GameOver:
 
 # Выигрыш игры
 class Win:
-    def __init__(self, score):
+    def __init__(self, score, difficult):
         self.running = True
         self.score = score  # Время прохождения игры
+        self.difficult = difficult  # Сложность игры
 
     def run(self):
         # Запись результата в текстовый документ
         output_score = open("score.txt", "a")
         # Кодирование результатов и запись
         writing_score = coder(self.score)
-        output_score.write(str(writing_score) + "\n")
+        output_score.write(str(
+            writing_score) + " " + self.difficult + "\n")
         output_score.close()
         while self.running:
             for event in pg.event.get():
@@ -1068,7 +1070,7 @@ class Game:
                     self.tmplist.append(i)
         # Если буферный лист забит, то лист упавших вещей
         # удаляет элементы, содержащиеся в буферном листе
-        if self.tmplist:
+        if self.tmplist and self.drop:
             for i in range(len(self.tmplist)):
                 del self.drop[self.tmplist[i]]
         # Очистка буферного листа
@@ -1493,7 +1495,8 @@ class Game:
                                 self.world.entities[j + 2][i + 1] == 5 and\
                                     self.world.entities[j + 2][i + 2] == 5:
                                 Win(str(datetime.timedelta(
-                                    seconds=int(self.time_in_game)))).run()
+                                    seconds=int(self.time_in_game))),
+                                    self.difficult).run()
                             '''
                             Если тотем построен в виде:
                             С С С
@@ -2085,7 +2088,7 @@ class Cow(pg.sprite.Sprite):
 
         self.frames = []    # Лист кадров
         self.cur_frame = 0  # Текущий кадр
-
+        self.mirrored = False  # Отразить коровку
         self.cut_sheet(load_image("c_sheet.png"))   # Полотно спрайтов коровки
 
         self.image = self.frames[self.cur_frame]    # Картинка из листа
@@ -2120,6 +2123,7 @@ class Cow(pg.sprite.Sprite):
 
     def cut_sheet(self, sheet):
         self.comparestates()    # Вызвать функцию состояний анимации
+        self.frames.clear()  # Чтобы удалить остаточные кадры
         # Получить маску прямоугольника из картинки
         self.rect = pg.Rect(0, 0, sheet.get_width() // 2,
                             sheet.get_height() // 2)
@@ -2149,15 +2153,20 @@ class Cow(pg.sprite.Sprite):
             self.vx = 0
             self.vy = 0
             self.state = "stay"
-            self.cut_sheet(load_image("c_sheet.png"))
+            if self.mirrored:
+                self.cut_sheet(load_image("cm_sheet.png"))
+            else:
+                self.cut_sheet(load_image("c_sheet.png"))
 
         # Если коровка идет налево
         if b == 1:
             self.vx = -self.speed
+            self.mirrored = False
 
         # Если коровка идет направо
         if b == 2:
             self.vx = self.speed
+            self.mirrored = True
 
         # Если коровка идет вверх
         if b == 3:
@@ -2170,7 +2179,11 @@ class Cow(pg.sprite.Sprite):
         # Если коровка не стоит, то проигрывается анимация бега
         if b > 0:
             self.state = "run"
-            self.cut_sheet(load_image("c_sheet.png"))
+            # Чтобы коровка могла смотреть по сторонам(отражение)
+            if self.mirrored:
+                self.cut_sheet(load_image("cm_sheet.png"))
+            else:
+                self.cut_sheet(load_image("c_sheet.png"))
 
     def update(self):
         # Интервал между кадрами
@@ -2213,6 +2226,7 @@ class Cow(pg.sprite.Sprite):
 class SecretLevel:
     def __init__(self):
         clear_tiles()
+        self.running = True
         self.step = 0  # За пределы карты, игрок не сможет выйти
         self.dt = 0  # Обновление времени внутри системы
         self.FPS = 100  # Кадры в секунду для оптимизации
@@ -2301,7 +2315,6 @@ class SecretLevel:
             self.list_coordinates_victims[9], self.player)]
         # Перезагружаю инвентарь
         self.inventory.render()
-        self.running = True
 
         # Обновляю группы спрайтов
         all_sprites.update()
