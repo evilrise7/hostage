@@ -213,7 +213,7 @@ drop_images = {"meat": load_image('meat.png'),
 # Переменная отвечает за запуск секретного уровня
 psycho_level = 0
 # Переменная ограничитель для частиц
-screen_rect = (0, 0, 4224, 4224)
+screen_rect = (0, 0, W_WINDOW * 64, H_WINDOW * 64)
 
 
 # Класс меню
@@ -1543,12 +1543,7 @@ class Game:
             entities_group.update()
             drop_group.update()
 
-    def run(self):
-        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
-        # Загружаю мир и инвентарь
-        self.world.render()
-        self.inventory.render()
-
+    def update_groups(self):
         # Обновляю группы спрайтов
         tiles_group.update()
         all_sprites.update()
@@ -1556,6 +1551,15 @@ class Game:
         inventory_group.update()
         entities_group.update()
         drop_group.update()
+
+    def run(self):
+        enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
+        # Загружаю мир и инвентарь
+        self.world.render()
+        self.inventory.render()
+
+        # Обновляю группы спрайтов
+        self.update_groups()
 
         # Кнопки паузы
         continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
@@ -1598,6 +1602,11 @@ class Game:
                 if event.type == pg.QUIT:
                     game_quit()
                     self.running = False
+
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+                    self.update_groups()
 
                 if event.type == pg.MOUSEMOTION:
                     # Анимация текста при включенной паузе
@@ -1929,20 +1938,20 @@ class Camera:
         self.dx = 0
         self.dy = 0
         # Маска камеры прямоугольником
-        self.camera = pg.Rect(0, 0, 4224, 4224)
-
-        self.width = 4224   # Размер всей карты по длине
-        self.height = 4224  # Размер всей карты по ширине
+        self.camera = pg.Rect(0, 0, 64 * H_WINDOW // 8,
+                              64 * H_WINDOW // 8)
 
     # сдвинуть спрайты на смещение камеры
     def apply(self, obj):
         return obj.rect.move(self.camera.topleft)
 
     def update(self, target):
+        self.width = 64 * H_WINDOW // 8  # Размер всей карты по длине
+        self.height = 64 * H_WINDOW // 8  # Размер всей карты по ширине
         # Положение камеры берет разность середины экрана
         # и положения игрока вместе с его размерами
-        x = -target.rect.x - target.rect.w + int(640 // 2)
-        y = -target.rect.y - target.rect.h + int(512 // 2)
+        x = -target.rect.x - target.rect.w + int(W_WINDOW // 2)
+        y = -target.rect.y - target.rect.h + int(H_WINDOW // 2)
 
         '''
         Ограничения(экстремумы) координат, нужны для того
@@ -1964,29 +1973,39 @@ class Camera:
 class Tile(pg.sprite.Sprite):
     def __init__(self, types, x, y):
         super().__init__(tiles_group)
-        self.cell_size = 64  # Размер ячейки
+        self.x = x
+        self.y = y
         self.type = types  # Тип ячейки, для загрузки соответсвующего спрайта
         self.image = tile_images[types]  # Загрузка спрайта
+        self.update()
+
+    def update(self):
+        self.cell_size = H_WINDOW // 8
         # Изменение размеров ячейки
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
         # Прямоугольная маска
-        self.rect = self.image.get_rect().move(self.cell_size * x,
-                                               self.cell_size * y)
+        self.rect = self.image.get_rect().move(
+            self.cell_size * self.x, self.cell_size * self.y)
 
 
 # Природные объекты
 class Entity(pg.sprite.Sprite):
     def __init__(self, types, x, y):
         super().__init__(entities_group)
-        self.cell_size = 64  # Размер клетки
+        self.x = x
+        self.y = y
         self.image = entity_images[types]   # Спрайт из словаря
+        self.update()
+
+    def update(self):
+        self.cell_size = H_WINDOW // 8  # Размер клетки
         # Изменение размеров изображения
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
         # Маска спрайта из прямоугольника
-        self.rect = self.image.get_rect().move(self.cell_size * x,
-                                               self.cell_size * y)
+        self.rect = self.image.get_rect().move(self.cell_size * self.x,
+                                               self.cell_size * self.y)
 
     # Уничтожение клетки, если что-то поставили
     def get_out(self, tile):
@@ -2263,13 +2282,17 @@ class Craft:
 class InventoryTile(pg.sprite.Sprite):
     def __init__(self, types, x):
         super().__init__(inventory_group)
-        self.cell_size = 72  # Размер ячейки
         self.image = inventory_images[types]    # Спрайт из словаря
+        self.x = x
+
+    def update(self):
+        self.cell_size = int(H_WINDOW * 0.140625)  # Размер ячейки
         # Изменяются размеры спрайта ячейки
         self.image = pg.transform.scale(self.image,
                                         (self.cell_size, self.cell_size))
         # Прямоугольная маска спрайта
-        self.rect = self.image.get_rect().move(self.cell_size * x + 240, 0)
+        self.rect = self.image.get_rect().move(
+            self.cell_size * self.x + W_WINDOW * 0.375, 0)
 
 
 # Выпадение вещей
@@ -2277,14 +2300,10 @@ class Drop(pg.sprite.Sprite):
     def __init__(self, types, player, x, y, game):
         super().__init__(drop_group)
         self.type = types   # Тип вещи
-        self.cell_size = 64  # Размер клетки
+        self.x = x
+        self.y = y
         self.image = drop_images[types]  # Спрайт берется из словаря
-        # Изменяются размеры
-        self.image = pg.transform.scale(self.image,
-                                        (self.cell_size, self.cell_size))
-        # Прямоугольная маска спрайта
-        self.rect = self.image.get_rect().move(self.cell_size * x,
-                                               self.cell_size * y)
+        self.update()
         self.player = player    # Текущий игрок
         self.step = game.step   # Текущее состояние пожирания мира
 
@@ -2309,6 +2328,15 @@ class Drop(pg.sprite.Sprite):
         if self.rect.y > 64 * (65 - self.step):
             return 1
 
+    def update(self):
+        self.cell_size = H_WINDOW // 8  # Размер клетки
+        # Изменяются размеры
+        self.image = pg.transform.scale(self.image,
+                                        (self.cell_size, self.cell_size))
+        # Прямоугольная маска спрайта
+        self.rect = self.image.get_rect().move(self.cell_size * self.x,
+                                               self.cell_size * self.y)
+
 
 # Частицы крови
 class Blood(pg.sprite.Sprite):
@@ -2330,6 +2358,8 @@ class Blood(pg.sprite.Sprite):
         self.gravity = 1
 
     def update(self):
+        global screen_rect
+        screen_rect = (0, 0, W_WINDOW * 64, H_WINDOW * 64)
         # применяем гравитационный эффект:
         # движение с ускорением под действием гравитации
         self.velocity[1] += self.gravity
