@@ -2615,6 +2615,7 @@ class SecretLevel:
 
     def check_victims(self):
         # Проверка упавших полотенец и добавление их в инвентарь
+        self.tmplist = []  # Буферный лист полотенец
         # Если игрок касается полотенца, оно уничтожается,
         # а игрок получает в инвентарь соотвествующее полотенце
         if self.drop:
@@ -2631,6 +2632,7 @@ class SecretLevel:
                 del self.drop[self.tmplist[i]]
 
     def run(self):
+        screen = pg.display.set_mode((W_WINDOW, H_WINDOW))
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         inventory_group.empty()
         # Загружаю мир и инвентарь
@@ -2663,8 +2665,6 @@ class SecretLevel:
         inventory_group.update()
         drop_group.update()
 
-        # Лист, чтобы прослеживать уже добавленные предметы
-        self.tmplist = []
         while self.running:
             # Обновление экрана путем заливки
             screen.fill((0, 0, 0))
@@ -2789,5 +2789,4 @@ def create_particles(position):
 
 
 # Сам запуск всей игры
-#open_menu()
-SecretLevel().run()
+open_menu()
