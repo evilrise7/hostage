@@ -567,6 +567,10 @@ class TutorialTerrain:
                     game_quit()
                     self.running = False
 
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+
                 if event.type == pg.MOUSEBUTTONDOWN:
                     # Переключение слайдов
                     if self.slide < 9:
@@ -587,8 +591,6 @@ class TutorialTerrain:
                         click_sound.play()
                         StartMenu().run()
 
-                if event.type == pg.VIDEORESIZE:
-                    window_resizing(event)
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             # Добавление слайдов и их расположение
@@ -832,6 +834,33 @@ class Win:
         self.score = score  # Время прохождения игры
         self.difficult = difficult  # Сложность игры
 
+    def draw_txt(self):
+        # Добавление объектов на экран
+        # You win
+        self.win = start_menu_text.render(
+            "You win!", 0, (0, 255, 0))
+
+        # Отступ по ширине
+        txt_h = self.win.get_height()
+
+        win_txt_x = W_WINDOW // 2 - self.win.get_width() // 2
+        screen.blit(self.win, (win_txt_x,
+                               H_WINDOW - 6 * txt_h))
+
+        # TIME:
+        self.time = menu_text.render(
+            "TIME:", 0, (255, 255, 255))
+        time_txt_x = W_WINDOW // 2 - self.time.get_width() // 2
+        screen.blit(self.time, (time_txt_x,
+                                H_WINDOW - 5 * txt_h))
+
+        # SCORE
+        self.scr_txt = menu_text.render(
+            str(self.score), 0, (255, 255, 255))
+        score_txt_x = W_WINDOW // 2 - self.scr_txt.get_width() // 2
+        screen.blit(self.scr_txt, (score_txt_x,
+                                   H_WINDOW - 4.2 * txt_h))
+
     def run(self):
         # Запись результата в текстовый документ
         output_score = open("score.txt", "a")
@@ -859,13 +888,7 @@ class Win:
 
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
-            # Добавление объектов на экран
-            screen.blit(start_menu_text.render(
-                "You win!", 0, (0, 255, 0)), (210, 200))
-            screen.blit(menu_text.render(
-                "Your time is", 0, (255, 255, 255)), (200, 250))
-            screen.blit(menu_text.render(
-                str(self.score), 0, (255, 255, 255)), (250, 290))
+            self.draw_txt()
             # Обновление кадра
             pg.display.flip()
         # Запуск меню, при выходе
@@ -2675,5 +2698,4 @@ def create_particles(position):
 
 
 # Сам запуск всей игры
-#open_menu()
-DrownedChildren().run()
+open_menu()
