@@ -17,11 +17,13 @@ pg.display.set_caption("Hell Obtained Sensible Tiny And Geniusly Emmy.")
 pg.display.set_icon(pg.image.load("sprites/icon.png"))
 
 # Разрешение экрана и залипание клавиш(для передвижения игрока в игре)
-screen = pg.display.set_mode((640, 512))
+W_WINDOW = 640
+H_WINDOW = 512
+screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
 pg.key.set_repeat(500, 10)
 
 # Три варианта текста, которых достаточно для оформления меню
-logo_text = pg.font.Font('cyr.ttf', 72)
+logo_text = pg.font.Font('cyr.ttf', 80)
 menu_text = pg.font.Font('cyr.ttf', 36)
 start_menu_text = pg.font.Font('cyr.ttf', 48)
 
@@ -131,6 +133,15 @@ def decoder(score_input):
     return score_input
 
 
+def window_resizing(event):
+    global W_WINDOW, H_WINDOW, screen
+    if event.w > 639 and event.h > 511:
+        W_WINDOW = event.w
+        H_WINDOW = event.h
+        screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
+    else:
+        screen = pg.display.set_mode((640, 512), pg.RESIZABLE)
+
 # Словарь спрайтов игрового мира
 tile_images = {"grass": load_image('grass.png'),
                "sand": load_image('sand.png'),
@@ -191,24 +202,30 @@ class Menu:
     def __init__(self):
         self.running = True
         pg.mouse.set_visible(True)  # Сделать мышь видимой
+        # Начать игру, Результаты, Настройки и Выход
+        self.start_game = menu_text.render("Start Game", 0, (100, 100, 100))
+        self.record_txt = menu_text.render("Scores", 0, (100, 100, 100))
+        self.settings_txt = menu_text.render("Settings", 0, (100, 100, 100))
+        self.exit_txt = menu_text.render("Quit", 0, (100, 100, 100))
+
+    def resize_rect_button(self):
+        global W_WINDOW, H_WINDOW, screen
+        # Начать игру, Результаты, Настройки и Выход
+        self.start_game_rect = self.start_game.get_rect().move(W_WINDOW * 0.125,
+                                                               H_WINDOW * 0.29296875)
+        self.record_rect = self.record_txt.get_rect().move(W_WINDOW * 0.125,
+                                                           H_WINDOW * 0.390625)
+        self.settings_rect = self.settings_txt.get_rect().move(W_WINDOW * 0.125,
+                                                               H_WINDOW * 0.48828125)
+        self.exit_rect = self.exit_txt.get_rect().move(W_WINDOW * 0.125,
+                                                       H_WINDOW * 0.5859375)
 
     def run(self):
+        global W_WINDOW, H_WINDOW, screen
+        self.resize_rect_button()
         game_logo_text = logo_text.render("H.O.S.T.A.G.E.",
                                           0, (255, 255, 255))
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
-        # Начать игру, Результаты, Настройки и Выход
-        start_game = menu_text.render("Start Game", 0, (100, 100, 100))
-        start_game_rect = start_game.get_rect().move(80, 150)
-
-        record_txt = menu_text.render("Scores", 0, (100, 100, 100))
-        record_rect = record_txt.get_rect().move(80, 200)
-
-        settings_txt = menu_text.render("Settings", 0, (100, 100, 100))
-        settings_rect = settings_txt.get_rect().move(80, 250)
-
-        exit_txt = menu_text.render("Quit", 0, (100, 100, 100))
-        exit_rect = exit_txt.get_rect().move(80, 300)
-
         while self.running:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -216,62 +233,66 @@ class Menu:
 
                 # "Анимированные" тексты кнопок меню
                 if event.type == pg.MOUSEMOTION:
-                    if start_game_rect.collidepoint(event.pos):
-                        start_game = menu_text.render("Start Game",
-                                                      0, (255, 255, 255))
+                    if self.start_game_rect.collidepoint(event.pos):
+                        self.start_game = menu_text.render("Start Game",
+                                                           0, (255, 255, 255))
                     else:
-                        start_game = menu_text.render("Start Game",
-                                                      0, (100, 100, 100))
+                        self.start_game = menu_text.render("Start Game",
+                                                           0, (100, 100, 100))
 
-                    if record_rect.collidepoint(event.pos):
-                        record_txt = menu_text.render("Scores", 0,
-                                                      (255, 255, 255))
+                    if self.record_rect.collidepoint(event.pos):
+                        self.record_txt = menu_text.render("Scores", 0,
+                                                           (255, 255, 255))
                     else:
-                        record_txt = menu_text.render("Scores", 0,
-                                                      (100, 100, 100))
+                        self.record_txt = menu_text.render("Scores", 0,
+                                                           (100, 100, 100))
 
-                    if settings_rect.collidepoint(event.pos):
-                        settings_txt = menu_text.render("Settings",
-                                                        0, (255, 255, 255))
+                    if self.settings_rect.collidepoint(event.pos):
+                        self.settings_txt = menu_text.render("Settings",
+                                                             0, (255, 255, 255))
                     else:
-                        settings_txt = menu_text.render("Settings",
-                                                        0, (100, 100, 100))
+                        self.settings_txt = menu_text.render("Settings",
+                                                             0, (100, 100, 100))
 
-                    if exit_rect.collidepoint(event.pos):
-                        exit_txt = menu_text.render("Quit", 0, (255, 255, 255))
+                    if self.exit_rect.collidepoint(event.pos):
+                        self.exit_txt = menu_text.render("Quit", 0, (255, 255, 255))
                     else:
-                        exit_txt = menu_text.render("Quit", 0, (100, 100, 100))
+                        self.exit_txt = menu_text.render("Quit", 0, (100, 100, 100))
 
                 if event.type == pg.MOUSEBUTTONDOWN:
-                    if start_game_rect.collidepoint(event.pos):
+                    if self.start_game_rect.collidepoint(event.pos):
                         # Запуск меню выбора уровней
                         click_sound.play()
                         Level().run()
 
-                    if record_rect.collidepoint(event.pos):
+                    if self.record_rect.collidepoint(event.pos):
                         click_sound.play()
                         Score().run()
-                    if settings_rect.collidepoint(event.pos):
+                    if self.settings_rect.collidepoint(event.pos):
                         click_sound.play()
                         Settings().run()
-                    if exit_rect.collidepoint(event.pos):
+                    if self.exit_rect.collidepoint(event.pos):
                         # Выход из игры
                         click_sound.play()
                         self.running = False
 
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    self.resize_rect_button()
+
             # Логотип игры
-            image = load_image("logo.png")
-            image = pg.transform.scale(image, (144, 196))
+            logo = load_image("logo.png")
+            logo = pg.transform.scale(logo, (144, 196))
 
             # Обновления кадра, путем заливки
             screen.fill((0, 0, 0))
             # Добавить спрайты на экран
-            screen.blit(image, (400, 150))
-            screen.blit(start_game, (80, 150))
-            screen.blit(record_txt, (80, 200))
-            screen.blit(settings_txt, (80, 250))
-            screen.blit(exit_txt, (80, 300))
-            screen.blit(game_logo_text, (80, 30))
+            screen.blit(logo, (W_WINDOW * 0.625, H_WINDOW * 0.29296875))
+            screen.blit(self.start_game, (W_WINDOW * 0.125, H_WINDOW * 0.29296875))
+            screen.blit(self.record_txt, (W_WINDOW * 0.125, H_WINDOW * 0.390625))
+            screen.blit(self.settings_txt, (W_WINDOW * 0.125, H_WINDOW * 0.48828125))
+            screen.blit(self.exit_txt, (W_WINDOW * 0.125, H_WINDOW * 0.5859375))
+            screen.blit(game_logo_text, (W_WINDOW * 0.125, H_WINDOW * 0.05859375))
             # Обновление кадра
             pg.display.flip()
         # Выход из игры
@@ -289,10 +310,14 @@ class Level:
         self.level_secret = load_image("level2.png")
 
         # Маски спрайтов из прямоугольника для клика
-        self.level_terrain_rect = self.level_terrain.get_rect().move(0, 120)
-        self.level_secret_rect = self.level_secret.get_rect().move(320, 120)
+        self.level_terrain_rect = self.level_terrain.get_rect().move(
+            0, H_WINDOW * 0.234375)
+        self.level_secret_rect = self.level_secret.get_rect().move(
+            W_WINDOW // 2, H_WINDOW * 0.234375)
 
     def run(self):
+        global W_WINDOW, H_WINDOW, screen
+
         while self.running:
             for event in pg.event.get():
                 # Закрытие экрана
@@ -316,16 +341,21 @@ class Level:
                         click_sound.play()
                         SecretLevel().run()
 
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             # Добавление объектов на экран
-            screen.blit(start_menu_text.render("CHOOSE YOUR LEVEL!",
-                                               0, (255, 255, 255)), (110, 20))
+            screen.blit(start_menu_text.render(
+                "CHOOSE YOUR LEVEL!", 0, (255, 255, 255)),
+                (W_WINDOW * 0.21484375, H_WINDOW * 0.0390625))
 
-            screen.blit(self.level_terrain, (0, 120))
+            screen.blit(self.level_terrain, (0, H_WINDOW * 0.234375))
             # Если секретный уровень открыт, добавить его выбор на экран
             if self.level:
-                screen.blit(self.level_secret, (320, 120))
+                screen.blit(self.level_secret, (W_WINDOW // 2,
+                                                H_WINDOW * 0.234375))
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
