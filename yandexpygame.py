@@ -847,6 +847,11 @@ class Win:
                     game_quit()
                     self.running = False
 
+                # Расширение экрана
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+
                 if event.type == pg.KEYDOWN:
                     # Перейти в меню
                     if event.key == pg.K_ESCAPE:
@@ -872,22 +877,49 @@ class DrownedChildren:
     def __init__(self):
         self.running = True
 
+    def txt_init(self):
+        # Текста прохождения уровней
+        self.congratulations_txt = start_menu_text.render(
+            "Congratulations!", 0, (255, 255, 255))
+        self.drown_txt = start_menu_text.render(
+            "You drowned your own", 0, (255, 255, 255))
+        self.children_txt = start_menu_text.render(
+            "children.", 0, (255, 255, 255))
+        self.best_mom = start_menu_text.render(
+            "You're the best mother!", 0, (255, 255, 255))
+
+    def congratulations(self):
+        # Ширина текста одинаковая везде
+        txt_h = self.best_mom.get_height()
+        # Congratulations!
+        cong_w = self.congratulations_txt.get_width() // 2
+        cong_txt_x = W_WINDOW // 2 - cong_w
+        cong_txt_y = H_WINDOW - 5 * txt_h
+        screen.blit(self.congratulations_txt, (cong_txt_x,
+                                               cong_txt_y))
+
+        # You drowned your own
+        drown_w = self.drown_txt.get_width() // 2
+        drown_txt_x = W_WINDOW // 2 - drown_w
+        drown_txt_y = H_WINDOW - 4 * txt_h
+        screen.blit(self.drown_txt, (drown_txt_x,
+                                     drown_txt_y))
+
+        # children
+        child_w = self.children_txt.get_width() // 2
+        child_txt_x = W_WINDOW // 2 - child_w
+        child_txt_y = H_WINDOW - 3 * txt_h
+        screen.blit(self.children_txt, (child_txt_x,
+                                        child_txt_y))
+
+        # best mom
+        mom_w = self.best_mom.get_width() // 2
+        mom_txt_x = W_WINDOW // 2 - mom_w
+        mom_txt_y = H_WINDOW - 2 * txt_h
+        screen.blit(self.best_mom, (mom_txt_x, mom_txt_y))
+
     def run(self):
-        # Загрузка объектов
-        child_d = load_image("child_D.png")
-        child_d = pg.transform.scale(child_d, (144, 144))
-
-        child_r = load_image("child_R.png")
-        child_r = pg.transform.scale(child_r, (144, 144))
-
-        child_o = load_image("child_O.png")
-        child_o = pg.transform.scale(child_o, (144, 144))
-
-        child_w = load_image("child_W.png")
-        child_w = pg.transform.scale(child_w, (144, 144))
-
-        child_n = load_image("child_N.png")
-        child_n = pg.transform.scale(child_n, (144, 144))
+        self.txt_init()  # Отобразить текст
         while self.running:
             for event in pg.event.get():
                 # Закрытие окна
@@ -895,28 +927,55 @@ class DrownedChildren:
                     game_quit()
                     self.running = False
 
+                # Расширение экрана
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+                    self.txt_init()
+
                 if event.type == pg.KEYDOWN:
                     # Перейти в меню
                     if event.key == pg.K_ESCAPE:
                         self.running = False
 
+            # Отступы
+            child_size = int(H_WINDOW * 0.28125)
+            middle_x = W_WINDOW // 2 - child_size // 2
+            stepx = child_size // 2 // 0.73
+
+            # Загрузка объектов
+            child_d = load_image("child_D.png")
+            child_d = pg.transform.scale(child_d, (child_size,
+                                                   child_size))
+
+            child_r = load_image("child_R.png")
+            child_r = pg.transform.scale(child_r, (child_size,
+                                                   child_size))
+
+            child_o = load_image("child_O.png")
+            child_o = pg.transform.scale(child_o, (child_size,
+                                                   child_size))
+
+            child_w = load_image("child_W.png")
+            child_w = pg.transform.scale(child_w, (child_size,
+                                                   child_size))
+
+            child_n = load_image("child_N.png")
+            child_n = pg.transform.scale(child_n, (child_size,
+                                                   child_size))
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
-            # Добавление объектов на экран
-            screen.blit(child_d, (60, 70))
-            screen.blit(child_r, (156, 70))
-            screen.blit(child_o, (252, 70))
-            screen.blit(child_w, (348, 70))
-            screen.blit(child_n, (444, 70))
 
-            screen.blit(start_menu_text.render("Congratulations!", 0,
-                                               (255, 255, 255)), (130, 230))
-            screen.blit(start_menu_text.render("You drowned your own", 0,
-                                               (255, 255, 255)), (40, 270))
-            screen.blit(start_menu_text.render("children.", 0,
-                                               (255, 255, 255)), (220, 310))
-            screen.blit(start_menu_text.render("You're the best mother!", 0,
-                                               (255, 255, 255)), (20, 350))
+            # Добавление объектов на экран
+            screen.blit(child_d, (middle_x - 2 * stepx, H_WINDOW * 0.13671875))
+            screen.blit(child_r, (middle_x - stepx, H_WINDOW * 0.13671875))
+            screen.blit(child_o, (middle_x, H_WINDOW * 0.13671875))
+            screen.blit(child_w, (middle_x + stepx, H_WINDOW * 0.13671875))
+            screen.blit(child_n, (middle_x + stepx * 2, H_WINDOW * 0.13671875))
+
+            # Текст прохождения уровня
+            self.congratulations()
+
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
@@ -2616,4 +2675,5 @@ def create_particles(position):
 
 
 # Сам запуск всей игры
-open_menu()
+#open_menu()
+DrownedChildren().run()
