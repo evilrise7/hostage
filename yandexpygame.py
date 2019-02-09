@@ -1057,8 +1057,10 @@ class Game:
             posy = random.randint(48, 62)
 
         # Создание игрока
+        self.cell_size = H_WINDOW // 8
         self.player = Player(all_sprites, self, posx - 0.5,
-                             posy - 0.5, 64, boyorgirl)
+                             posy - 0.5, self.cell_size, boyorgirl)
+        self.halfsize = H_WINDOW // 16
         self.camera = Camera()  # Создание камеры
         self.inventory = Inventory()  # Создание инвентаря
         self.craft = Craft()  # Создания кравта
@@ -1067,7 +1069,8 @@ class Game:
         for _ in range(random.randint(18, 24)):
             self.mobs.append(Cow(animal_group,
                                  self, random.randint(2, 62),
-                                 random.randint(2, 62), 64))
+                                 random.randint(2, 62),
+                                 self.cell_size))
         self.drop = []
         self.tmpmobs = []  # Буферный лист живых существ
         # Лист, чтобы прослеживать уже добавленные предметы
@@ -1083,8 +1086,10 @@ class Game:
             self.cell_timer = 3.75
         # Загрузка курсора инвентаря и его позиция
         self.current_cursor_pos = 0
+        self.cell = int(H_WINDOW * 0.140625)  # Расширение экрана
         self.cursor = load_image("cursor.png")
-        self.cursor = pg.transform.scale(self.cursor, (72, 72))
+        self.cursor = pg.transform.scale(self.cursor, (self.cell,
+                                                       self.cell))
 
     def player_run(self):
         # Обработка бегающего игрока
@@ -1128,13 +1133,17 @@ class Game:
             # Отображаю инструмент игрока относительно него
             if not sprite.mirrored:
                 tool_img = load_image("tool_" + str(self.tool) + ".png")
-                tool_img = pg.transform.scale(tool_img, (72, 72))
-                screen.blit(tool_img, (pos[0] - 28, pos[1] - 4))
+                tool_img = pg.transform.scale(tool_img, (self.cell,
+                                                         self.cell))
+                screen.blit(tool_img, (pos[0] - self.cell // 2.57,
+                                       pos[1] - self.cell // 18))
 
             if sprite.mirrored:
                 tool_img = load_image("toolm_" + str(self.tool) + ".png")
-                tool_img = pg.transform.scale(tool_img, (72, 72))
-                screen.blit(tool_img, (pos[0] + 24, pos[1] - 4))
+                tool_img = pg.transform.scale(tool_img, (self.cell,
+                                                         self.cell))
+                screen.blit(tool_img, (pos[0] + self.cell // 3,
+                                       pos[1] - self.cell // 18))
 
             screen.blit(sprite.image, self.camera.apply(sprite))
 
@@ -1150,7 +1159,7 @@ class Game:
             if sprite.hp:
                 screen.blit(menu_text.render(
                     str(sprite.hp) + "HP", 0, (255, 255, 255)),
-                    (pos[0], pos[1] - 40))
+                    (pos[0], pos[1] - self.cell // 1.8))
 
     def world_cutting(self):
         # Если таймер уничтожения границ больше, чем
@@ -1183,18 +1192,22 @@ class Game:
     def check_cows(self):
         for i in range(len(self.mobs)):
             # Если животное касается границ, то оно отлетает
-            if self.mobs[i].rect.x < 64 * self.step:
+            if self.mobs[i].rect.x < \
+                    self.cell_size * self.step:
                 self.mobs[i].vx = 0
-                self.mobs[i].vx += 72
-            if self.mobs[i].rect.x > 64 * (65 - self.step):
+                self.mobs[i].vx += self.cell
+            if self.mobs[i].rect.x > \
+                    self.cell_size * (65 - self.step):
                 self.mobs[i].vx = 0
-                self.mobs[i].vx -= 72
-            if self.mobs[i].rect.y < 64 * self.step:
+                self.mobs[i].vx -= self.cell
+            if self.mobs[i].rect.y < \
+                    self.cell_size * self.step:
                 self.mobs[i].vy = 0
-                self.mobs[i].vy += 72
-            if self.mobs[i].rect.y > 64 * (65 - self.step):
+                self.mobs[i].vy += self.cell
+            if self.mobs[i].rect.y > \
+                    self.cell_size * (65 - self.step):
                 self.mobs[i].vy = 0
-                self.mobs[i].vy -= 72
+                self.mobs[i].vy -= self.cell
 
     def append_drop(self, x, y):
         b = random.randint(0, 100)  # Вероятность выпадения M-го предмета
@@ -1234,14 +1247,14 @@ class Game:
                 # Появляются частицы крови.
                 # Если в руках топор, то у коровы отнимается 2 жизни
                 if self.tool == "axe":
-                    create_particles((self.player.rect.x + 32,
-                                      self.player.rect.y + 32))
+                    create_particles((self.player.rect.x + self.halfsize,
+                                      self.player.rect.y + self.halfsize))
                     self.mobs[i].hp -= 2
                     hit_sound.play()
                 # Если в руках ножницы, то у коровы отнимается 1 жизнь
                 else:
-                    create_particles((self.player.rect.x + 32,
-                                      self.player.rect.y + 32))
+                    create_particles((self.player.rect.x + self.halfsize,
+                                      self.player.rect.y + self.halfsize))
                     self.mobs[i].hp -= 1
                     hit_sound.play()
 
@@ -1268,8 +1281,11 @@ class Game:
                 if self.mobs[i].check_hp():
                     # Беру координаты игрока, т.к. PEP8 ругался
                     # за то, что я писал длинные строки
-                    x = int((self.player.rect.x + 32) / 4096 * 64)
-                    y = int((self.player.rect.y + 32) / 4096 * 64)
+                    x = int((self.player.rect.x + self.halfsize) /
+                            (self.cell_size * self.cell_size) * self.cell_size)
+                    y = int((self.player.rect.y + self.halfsize) /
+                            (self.cell_size * self.cell_size) * self.cell_size)
+                    print(x, y)
                     # Если живое существо имеет жизни == 0, то оно погибает
                     cow_died.play()
                     self.mobs[i].kill()
@@ -1321,10 +1337,6 @@ class Game:
             for i in range(len(self.drop)):
                 # При уничтожении, уничтоженный предмет попадает в
                 # буферный лист
-                if self.drop[i].check_drop_pos() == 1:
-                    self.drop[i].kill()
-                    self.tmplist.remove(i)
-
                 if self.drop[i].get_event() == 1:
                     self.drop[i].kill()
                     self.inventory.append(self.drop[i].type)
@@ -1332,6 +1344,8 @@ class Game:
         # Если буферный лист забит, то лист упавших вещей
         # удаляет элементы, содержащиеся в буферном листе
         if self.tmplist and self.drop:
+            print(self.tmplist)
+            print(self.drop)
             for i in range(len(self.tmplist)):
                 del self.drop[self.tmplist[i]]
         # Очистка буферного листа
@@ -1553,6 +1567,7 @@ class Game:
         drop_group.update()
 
     def run(self):
+        screen = pg.display.set_mode((W_WINDOW, H_WINDOW))
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         # Загружаю мир и инвентарь
         self.world.render()
@@ -1563,14 +1578,17 @@ class Game:
 
         # Кнопки паузы
         continue_txt = start_menu_text.render("Continue", 0, (100, 100, 100))
-        continue_rect = continue_txt.get_rect().move(60, 100)
+        continue_rect = continue_txt.get_rect().move(W_WINDOW * 0.09375,
+                                                     H_WINDOW * 0.1953125)
 
         quit_txt = start_menu_text.render("Quit", 0, (100, 100, 100))
-        quit_rect = quit_txt.get_rect().move(60, 160)
+        quit_rect = quit_txt.get_rect().move(W_WINDOW * 0.09375,
+                                             H_WINDOW * 0.3125)
         while self.running:
+            self.mapwidth = 66 * H_WINDOW // 8
             # Положение игрока внутри матрицы мира
-            x = int((self.player.rect.x + 32) / 4096 * 64)
-            y = int((self.player.rect.y + 32) / 4096 * 64)
+            x = int((self.player.rect.x + self.halfsize) / self.mapwidth * 66)
+            y = int((self.player.rect.y + self.halfsize) / self.mapwidth * 66)
             xl = x - 1  # Клетка слева
             xr = x + 1  # Клетка справа
             yu = y - 1  # Клетка сверху
@@ -1602,11 +1620,6 @@ class Game:
                 if event.type == pg.QUIT:
                     game_quit()
                     self.running = False
-
-                if event.type == pg.VIDEORESIZE:
-                    window_resizing(event)
-                    change_font_size()
-                    self.update_groups()
 
                 if event.type == pg.MOUSEMOTION:
                     # Анимация текста при включенной паузе
@@ -1735,8 +1748,12 @@ class Game:
                 # Продолжить, Выйти - активированы
                 pg.mouse.set_visible(True)
                 # Добавление кнопок меню паузы на экран
-                screen.blit(continue_txt, (60, 100))  # Продолжить
-                screen.blit(quit_txt, (60, 160))  # Выйти
+                # Продолжить
+                screen.blit(continue_txt, (W_WINDOW * 0.09375,
+                                           H_WINDOW * 0.1953125))
+                # Выйти
+                screen.blit(quit_txt, (W_WINDOW * 0.09375,
+                                       H_WINDOW * 0.3125))
 
             if not self.pause:
                 # Если весь мир сожран, то игра завершается с проигрышем
@@ -1800,16 +1817,21 @@ class Game:
 
                 # Текущий инструмент в руках героя
                 axe_scissors = load_image(str(self.tool) + ".png")
-                axe_scissors = pg.transform.scale(axe_scissors, (72, 72))
+                axe_scissors = pg.transform.scale(axe_scissors,
+                                                  (self.cell, self.cell))
                 # Добавление текущего инструмента в руках героя на экран
                 screen.blit(start_menu_text.render(
-                    str(self.tool), 0, (255, 255, 255)), (64, 72))
-                screen.blit(axe_scissors, (64, 0))
-                screen.blit(self.cursor,
-                            (72 * self.current_cursor_pos + 240, 0))
+                    str(self.tool), 0, (255, 255, 255)),
+                    (self.cell_size, self.cell))
+
+                screen.blit(axe_scissors, (self.cell_size, 0))
+                screen.blit(
+                    self.cursor,
+                    (self.cell * self.current_cursor_pos + W_WINDOW * 0.375, 0))
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
+        screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
         open_menu()
 
 
@@ -1946,8 +1968,8 @@ class Camera:
         return obj.rect.move(self.camera.topleft)
 
     def update(self, target):
-        self.width = 64 * H_WINDOW // 8  # Размер всей карты по длине
-        self.height = 64 * H_WINDOW // 8  # Размер всей карты по ширине
+        self.width = 66 * H_WINDOW // 8  # Размер всей карты по длине
+        self.height = 66 * H_WINDOW // 8  # Размер всей карты по ширине
         # Положение камеры берет разность середины экрана
         # и положения игрока вместе с его размерами
         x = -target.rect.x - target.rect.w + int(W_WINDOW // 2)
@@ -1962,8 +1984,8 @@ class Camera:
 
         x = min(0, x)  # ограничение на левый край
         y = min(0, y)  # ограничение на верхний край
-        x = max(-(self.width - 640), x)  # на правый край
-        y = max(-(self.height - 512), y)  # на нижний
+        x = max(-(self.width - W_WINDOW), x)  # на правый край
+        y = max(-(self.height - H_WINDOW), y)  # на нижний
 
         # Камера получает новую маску
         self.camera = pg.Rect(x, y, self.width, self.height)
@@ -2042,7 +2064,7 @@ class Player(pg.sprite.Sprite):
         self.cell_size = cell_size
 
         # Скорость героя
-        self.speed = 150
+        self.speed = H_WINDOW * 0.29296875
 
         self.vx = 0  # Скорость героя на проекцию Ox
         self.vy = 0  # Скорость героя на проекцию Oy
@@ -2082,7 +2104,7 @@ class Player(pg.sprite.Sprite):
         self.timer_animation += self.game.dt  # Таймер между кадрами анимациями
 
         # Если игрок не заходит за границы Oy
-        if self.y > self.game.step * 64:
+        if self.y > self.game.step * H_WINDOW // 8:
             if keys[pg.K_w]:    # Управление вверх
                 self.vy = -self.speed
                 # Смена кадра через 0.08 секунд
@@ -2091,10 +2113,11 @@ class Player(pg.sprite.Sprite):
                     self.timer_animation = 0  # Сброс таймера
 
         else:  # Если игрок за границами Oy
-            self.vy += 72  # Плавно отодвинуть игрока
+            # Плавно отодвинуть игрока
+            self.vy += int(H_WINDOW * 0.140625)
 
         # Если игрок не заходит за границы Oy
-        if self.y < (65 - self.game.step) * 64:
+        if self.y < (65 - self.game.step) * H_WINDOW // 8:
             if keys[pg.K_s]:  # Управление вниз
                 self.vy = self.speed
                 # Смена кадра через 0.08 секунд
@@ -2103,10 +2126,11 @@ class Player(pg.sprite.Sprite):
                     self.timer_animation = 0  # Сброс таймера
 
         else:  # Если игрок за границами Oy
-            self.vy -= 72  # Плавно отодвинуть игрока
+            # Плавно отодвинуть игрока
+            self.vy -= int(H_WINDOW * 0.140625)
 
         # Если игрок не заходит за границы Ox
-        if self.x > self.game.step * 64:
+        if self.x > self.game.step * H_WINDOW // 8:
             if keys[pg.K_a]:  # Управление влево
                 self.vx = -self.speed
                 self.mirrored = False  # Игрок смотрит налево
@@ -2116,10 +2140,11 @@ class Player(pg.sprite.Sprite):
                     self.timer_animation = 0  # Сброс таймера
 
         else:  # Если игрок за границами Ox
-            self.vx += 72  # Плавно отодвинуть игрока
+            # Плавно отодвинуть игрока
+            self.vx += int(H_WINDOW * 0.140625)
 
         # Если игрок не заходит за границы Ox
-        if self.x < (65 - self.game.step) * 64:
+        if self.x < (65 - self.game.step) * H_WINDOW // 8:
             if keys[pg.K_d]:  # Управление вправо
                 self.vx = self.speed
                 self.mirrored = True  # Игрок смотрит направо
@@ -2129,7 +2154,8 @@ class Player(pg.sprite.Sprite):
                     self.timer_animation = 0  # Сброс таймера
 
         else:  # Если игрок за границами Ox
-            self.vx -= 72  # Плавно отодвинуть игрока
+            # Плавно отодвинуть игрока
+            self.vx -= int(H_WINDOW * 0.140625)
 
         # Если игрок не двигается, идет состояние и анимация стойки
         if self.vx == 0 and self.vy == 0:
@@ -2160,9 +2186,9 @@ class Player(pg.sprite.Sprite):
                 self.timer = 0  # Сброс таймера
 
         # Изменять размер спрайта
-        self.image = pg.transform.scale(self.image,
-                                        (int(self.size[0] * 4),
-                                         int(self.size[1] * 4)))
+        self.size_image = H_WINDOW // 8
+        self.image = pg.transform.scale(self.image, (self.size_image,
+                                                     self.size_image))
         # Проверять управление игрока
         self.key_movement()
         # Передвижение игрока
@@ -2178,6 +2204,7 @@ class Inventory:
         self.w = 5  # Длина инветаря
         self.inv = [[0] * self.w for _ in range(2)]  # Лист инвентаря
         self.invtmp = []    # Буферный лист инвентаря
+        self.cell_size = int(H_WINDOW * 0.140625)  # Размер ячейки
 
     def render(self):
         inventory_group.empty()  # Очистить все спрайты инветаря
@@ -2217,7 +2244,8 @@ class Inventory:
             # Добавление ячеек инвентаря на экран
             screen.blit(start_menu_text.render(str(self.inv[1][i]),
                                                0, (255, 255, 255)),
-                        (284 + (i * 72), 72))
+                        (self.cell_size * i + W_WINDOW * 0.375,
+                         self.cell_size))
 
     def append(self, type_obj):
         # Добавление вещей в инвентарь
@@ -2259,23 +2287,35 @@ class Inventory:
 # Создание вещей
 class Craft:
     def __init__(self):
+        craft_width = H_WINDOW // 8 * 5
+        craft_height = H_WINDOW // 8
         # Создание мяса
         self.craft_meat = load_image("craft_meat.png")
-        self.craft_meat = pg.transform.scale(self.craft_meat, (360, 72))
+        self.craft_meat = pg.transform.scale(self.craft_meat,
+                                             (craft_width,
+                                              craft_height))
 
         # Создание золота
         self.craft_gold = load_image("craft_gold.png")
-        self.craft_gold = pg.transform.scale(self.craft_gold, (360, 72))
+        self.craft_gold = pg.transform.scale(self.craft_gold,
+                                             (craft_width,
+                                              craft_height))
         self.craft_type = -1    # Текущий кравт обнулен
 
     def render(self):
         if self.craft_type == 0:
+            # Координаты
+            obj_x = W_WINDOW // 2 - self.craft_meat.get_rect().size[0] // 2
+            obj_y = H_WINDOW - 2 * self.craft_meat.get_rect().size[1]
             # Добавить объект кравта мяса на экран
-            screen.blit(self.craft_meat, (150, 440))
+            screen.blit(self.craft_meat, (obj_x, obj_y))
 
         if self.craft_type == 1:
+            # Координаты
+            obj_x = W_WINDOW // 2 - self.craft_gold.get_rect().size[0] // 2
+            obj_y = H_WINDOW - 2 * self.craft_gold.get_rect().size[1]
             # Добавить объект кравта золота на экран
-            screen.blit(self.craft_gold, (150, 440))
+            screen.blit(self.craft_gold, (obj_x, obj_y))
 
 
 # Ячейка инвентаря
@@ -2308,25 +2348,12 @@ class Drop(pg.sprite.Sprite):
         self.step = game.step   # Текущее состояние пожирания мира
 
     def get_event(self):
+        self.halfplayer = H_WINDOW // 16
         # Если игрок касается выпавшей вещи
-        if self.rect.collidepoint((self.player.rect.x + 32),
-                                  (self.player.rect.y + 32)):
+        if self.rect.collidepoint((self.player.rect.x + self.halfplayer),
+                                  (self.player.rect.y + self.halfplayer)):
             pick_up_sound.play()
             return True
-
-    def check_drop_pos(self):
-        # Вещи уничтожаются при соприкосновении с границей мира
-        if self.rect.x < 64 * self.step:
-            return 1
-
-        if self.rect.x > 64 * (65 - self.step):
-            return 1
-
-        if self.rect.y < 64 * self.step:
-            return 1
-
-        if self.rect.y > 64 * (65 - self.step):
-            return 1
 
     def update(self):
         self.cell_size = H_WINDOW // 8  # Размер клетки
@@ -2391,7 +2418,7 @@ class Cow(pg.sprite.Sprite):
         self.rect = self.image.get_rect()   # Получить маску из прямоугольника
         self.cell_size = cell_size  # Текущий размер клетки в игровом мире
 
-        self.speed = 100    # Скорость коровки
+        self.speed = H_WINDOW * 0.1953125    # Скорость коровки
 
         self.vx = 0  # Скорость коровки на проекцию Ox
         self.vy = 0  # Скорость коровки на проекцию Oy
@@ -2484,9 +2511,9 @@ class Cow(pg.sprite.Sprite):
         # Таймер побега от игрока
         if self.timer_run > 0:
             self.timer_run -= self.game.dt
-            self.speed = 200
+            self.speed = 2 * H_WINDOW * 0.1953125
         else:
-            self.speed = 100
+            self.speed = H_WINDOW * 0.1953125
         # Интервал между кадрами
         self.timer += self.game.dt
         # Интервал изменения направления
@@ -2507,9 +2534,9 @@ class Cow(pg.sprite.Sprite):
                 self.timer = 0
 
         # Изменение размеров картинки
+        self.size_image = H_WINDOW // 8
         self.image = pg.transform.scale(self.image,
-                                        (int(self.size[0] * 4),
-                                         int(self.size[1] * 4)))
+                                        (self.size_image, self.size_image))
 
         # Каждые 2 секунды коровка будет двигатся по-разному
         if self.timer_choose_animation > 2:
