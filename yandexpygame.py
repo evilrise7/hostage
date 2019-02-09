@@ -23,9 +23,9 @@ screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
 pg.key.set_repeat(500, 10)
 
 # Три варианта текста, которых достаточно для оформления меню
-logo_text = pg.font.Font('cyr.ttf', 80)
-menu_text = pg.font.Font('cyr.ttf', 36)
-start_menu_text = pg.font.Font('cyr.ttf', 48)
+logo_text = pg.font.Font('cyr.ttf', int(H_WINDOW * 0.15625))
+menu_text = pg.font.Font('cyr.ttf', int(H_WINDOW * 0.0703125))
+start_menu_text = pg.font.Font('cyr.ttf', int(H_WINDOW * 0.09375))
 
 # Группы спрайтов. Я оформил их отдельно, чтобы изменять поле игры
 all_sprites = pg.sprite.Group()
@@ -56,6 +56,14 @@ hit_sound = pg.mixer.Sound("sounds/hit.wav")
 cow_died = pg.mixer.Sound("sounds/cow_died.wav")
 
 volume = True  # Состояние вкл/выкл звуковых эффектов
+
+
+# Изменение размеров с соотношением размеров экрана
+def change_font_size():
+    global logo_text, menu_text, start_menu_text
+    logo_text = pg.font.Font('cyr.ttf', int(H_WINDOW * 0.15625))
+    menu_text = pg.font.Font('cyr.ttf', int(H_WINDOW * 0.0703125))
+    start_menu_text = pg.font.Font('cyr.ttf', int(H_WINDOW * 0.09375))
 
 
 # Функция для загрузки спрайтов
@@ -142,6 +150,17 @@ def window_resizing(event):
     else:
         screen = pg.display.set_mode((640, 512), pg.RESIZABLE)
 
+
+def put_logo(screen):
+    # Логотип игры
+    logo = load_image("logo.png")
+    logo = pg.transform.scale(logo, (int(W_WINDOW * 0.225),
+                                     int(W_WINDOW * 0.225 / 0.773)))
+    # Добавить спрайты на экран
+    pos_logo = H_WINDOW // 2 - logo.get_rect().size[1] // 2
+    screen.blit(logo, (W_WINDOW * 0.625, pos_logo))
+
+
 # Словарь спрайтов игрового мира
 tile_images = {"grass": load_image('grass.png'),
                "sand": load_image('sand.png'),
@@ -203,6 +222,9 @@ class Menu:
         self.running = True
         pg.mouse.set_visible(True)  # Сделать мышь видимой
         # Начать игру, Результаты, Настройки и Выход
+        self.button_init()
+
+    def button_init(self):
         self.start_game = menu_text.render("Start Game", 0, (100, 100, 100))
         self.record_txt = menu_text.render("Scores", 0, (100, 100, 100))
         self.settings_txt = menu_text.render("Settings", 0, (100, 100, 100))
@@ -223,41 +245,48 @@ class Menu:
     def run(self):
         global W_WINDOW, H_WINDOW, screen
         self.resize_rect_button()
-        game_logo_text = logo_text.render("H.O.S.T.A.G.E.",
-                                          0, (255, 255, 255))
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         while self.running:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.running = False  # Выход из игры, при закрытии окна
 
+                # Адаптация всех объектов при расширении экрана
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+                    self.button_init()
+                    self.resize_rect_button()
+
                 # "Анимированные" тексты кнопок меню
                 if event.type == pg.MOUSEMOTION:
                     if self.start_game_rect.collidepoint(event.pos):
-                        self.start_game = menu_text.render("Start Game",
-                                                           0, (255, 255, 255))
+                        self.start_game = menu_text.render(
+                            "Start Game", 0, (255, 255, 255))
                     else:
-                        self.start_game = menu_text.render("Start Game",
-                                                           0, (100, 100, 100))
+                        self.start_game = menu_text.render(
+                            "Start Game", 0, (100, 100, 100))
 
                     if self.record_rect.collidepoint(event.pos):
-                        self.record_txt = menu_text.render("Scores", 0,
-                                                           (255, 255, 255))
+                        self.record_txt = menu_text.render(
+                            "Scores", 0, (255, 255, 255))
                     else:
-                        self.record_txt = menu_text.render("Scores", 0,
-                                                           (100, 100, 100))
+                        self.record_txt = menu_text.render(
+                            "Scores", 0, (100, 100, 100))
 
                     if self.settings_rect.collidepoint(event.pos):
-                        self.settings_txt = menu_text.render("Settings",
-                                                             0, (255, 255, 255))
+                        self.settings_txt = menu_text.render(
+                            "Settings", 0, (255, 255, 255))
                     else:
-                        self.settings_txt = menu_text.render("Settings",
-                                                             0, (100, 100, 100))
+                        self.settings_txt = menu_text.render(
+                            "Settings", 0, (100, 100, 100))
 
                     if self.exit_rect.collidepoint(event.pos):
-                        self.exit_txt = menu_text.render("Quit", 0, (255, 255, 255))
+                        self.exit_txt = menu_text.render(
+                            "Quit", 0, (255, 255, 255))
                     else:
-                        self.exit_txt = menu_text.render("Quit", 0, (100, 100, 100))
+                        self.exit_txt = menu_text.render(
+                            "Quit", 0, (100, 100, 100))
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     if self.start_game_rect.collidepoint(event.pos):
@@ -275,24 +304,22 @@ class Menu:
                         # Выход из игры
                         click_sound.play()
                         self.running = False
-
-                if event.type == pg.VIDEORESIZE:
-                    window_resizing(event)
-                    self.resize_rect_button()
-
-            # Логотип игры
-            logo = load_image("logo.png")
-            logo = pg.transform.scale(logo, (144, 196))
-
             # Обновления кадра, путем заливки
             screen.fill((0, 0, 0))
-            # Добавить спрайты на экран
-            screen.blit(logo, (W_WINDOW * 0.625, H_WINDOW * 0.29296875))
-            screen.blit(self.start_game, (W_WINDOW * 0.125, H_WINDOW * 0.29296875))
-            screen.blit(self.record_txt, (W_WINDOW * 0.125, H_WINDOW * 0.390625))
-            screen.blit(self.settings_txt, (W_WINDOW * 0.125, H_WINDOW * 0.48828125))
-            screen.blit(self.exit_txt, (W_WINDOW * 0.125, H_WINDOW * 0.5859375))
-            screen.blit(game_logo_text, (W_WINDOW * 0.125, H_WINDOW * 0.05859375))
+            # Логотипы
+            game_logo_text = logo_text.render("H.O.S.T.A.G.E.",
+                                              0, (255, 255, 255))
+            put_logo(screen)
+            screen.blit(self.start_game, (W_WINDOW * 0.125,
+                                          H_WINDOW * 0.29296875))
+            screen.blit(self.record_txt, (W_WINDOW * 0.125,
+                                          H_WINDOW * 0.390625))
+            screen.blit(self.settings_txt, (W_WINDOW * 0.125,
+                                            H_WINDOW * 0.48828125))
+            screen.blit(self.exit_txt, (W_WINDOW * 0.125,
+                                        H_WINDOW * 0.5859375))
+            screen.blit(game_logo_text, (W_WINDOW * 0.125,
+                                         H_WINDOW * 0.05859375))
             # Обновление кадра
             pg.display.flip()
         # Выход из игры
@@ -308,22 +335,37 @@ class Level:
         # Загрузка спрайтов выбора уровней
         self.level_terrain = load_image("level1.png")
         self.level_secret = load_image("level2.png")
+        self.txt_init()
 
-        # Маски спрайтов из прямоугольника для клика
-        self.level_terrain_rect = self.level_terrain.get_rect().move(
-            0, H_WINDOW * 0.234375)
-        self.level_secret_rect = self.level_secret.get_rect().move(
-            W_WINDOW // 2, H_WINDOW * 0.234375)
+    def txt_init(self):
+        self.choose_level_txt = start_menu_text.render(
+            "CHOOSE YOUR LEVEL!", 0, (255, 255, 255))
 
     def run(self):
         global W_WINDOW, H_WINDOW, screen
 
         while self.running:
+            change_font_size()  # Адаптация шрифта
+            # Позиция уровней по OY
+            pos_lvl_terrain = H_WINDOW // 2 - self.level_terrain.get_rect().size[1] // 2
+            pos_secret = H_WINDOW // 2 - self.level_secret.get_rect().size[1] // 2
+
+            # Маски спрайтов из прямоугольника для клика
+            self.level_terrain_rect = self.level_terrain.get_rect().move(
+                0, pos_lvl_terrain)
+            self.level_secret_rect = self.level_secret.get_rect().move(
+                W_WINDOW // 2, pos_secret)
+
             for event in pg.event.get():
                 # Закрытие экрана
                 if event.type == pg.QUIT:
                     game_quit()
                     self.running = False
+                # При расширении экрана
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+                    self.txt_init()
 
                 if event.type == pg.KEYDOWN:
                     # Перейти в меню
@@ -341,21 +383,23 @@ class Level:
                         click_sound.play()
                         SecretLevel().run()
 
-                if event.type == pg.VIDEORESIZE:
-                    window_resizing(event)
-
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
+            # Размеры картинок уровней
+            self.level_terrain = pg.transform.scale(self.level_terrain,
+                                                    (W_WINDOW // 2,
+                                                     int(W_WINDOW // 2 * 0.8)))
+            self.level_secret = pg.transform.scale(self.level_secret,
+                                                   (W_WINDOW // 2,
+                                                    int(W_WINDOW // 2 * 0.8)))
             # Добавление объектов на экран
-            screen.blit(start_menu_text.render(
-                "CHOOSE YOUR LEVEL!", 0, (255, 255, 255)),
-                (W_WINDOW * 0.21484375, H_WINDOW * 0.0390625))
-
-            screen.blit(self.level_terrain, (0, H_WINDOW * 0.234375))
+            screen.blit(self.choose_level_txt,
+                        (W_WINDOW // 2 - self.choose_level_txt.get_width() // 2,
+                         H_WINDOW * 0.0390625))
+            screen.blit(self.level_terrain, (0, pos_lvl_terrain))
             # Если секретный уровень открыт, добавить его выбор на экран
             if self.level:
-                screen.blit(self.level_secret, (W_WINDOW // 2,
-                                                H_WINDOW * 0.234375))
+                screen.blit(self.level_secret, (W_WINDOW // 2, pos_secret))
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
@@ -370,7 +414,7 @@ class Score:
 
     def top5scores(self):
         # Отступ для рекордов
-        liney = 160
+        liney = H_WINDOW * 0.3125
         # Чтение всех строк из файла с рекордами
         with open('score.txt', 'r') as score_file:
             self.score_list = [line.strip() for line in score_file]
@@ -378,7 +422,8 @@ class Score:
         if not self.score_list or self.score_list[0] == "":
             # Если отсутсвуют рекорды, то пишется текст "Пусто"
             screen.blit(menu_text.render(
-                "Empty", 0, (255, 255, 255)), (150, 150))
+                "Empty", 0, (255, 255, 255)), (W_WINDOW * 0.234375,
+                                               H_WINDOW * 0.29296875))
 
         # Если рекорды присутствуют
         else:
@@ -394,12 +439,10 @@ class Score:
                 # Добавления самих рекордов
                 screen.blit(menu_text.render(
                     str(i + 1) + ". " + str(self.score_list[i]),
-                    0, (255, 255, 255)), (100, liney))
-                liney += 30  # Добавление отсутпа
+                    0, (255, 255, 255)), (W_WINDOW * 0.15625, liney))
+                liney += H_WINDOW * 0.05859375  # Добавление отсутпа
 
     def run(self):
-        # Заголовок Результаты
-        score_title = menu_text.render("TOP 5 SPEEDRUNS:", 0, (255, 255, 255))
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         while self.running:
             for event in pg.event.get():
@@ -408,20 +451,23 @@ class Score:
                     game_quit()
                     self.running = False
 
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+
                 # Выход из игры нажатием ESC
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
                         self.running = False
 
-            # Логотип игры
-            image = load_image("logo.png")
-            image = pg.transform.scale(image, (144, 196))
-
             # Обновления кадра, путем заливки
             screen.fill((0, 0, 0))
-            # Добавить спрайты на экран
-            screen.blit(image, (400, 150))
-            screen.blit(score_title, (80, 100))
+            # Заголовок Результаты
+            self.score_title = menu_text.render("TOP 5 SPEEDRUNS:",
+                                                0, (255, 255, 255))
+            put_logo(screen)
+            screen.blit(self.score_title, (W_WINDOW * 0.125,
+                                           H_WINDOW * 0.1953125))
             self.top5scores()
             # Обновление кадра
             pg.display.flip()
@@ -433,18 +479,27 @@ class Score:
 class Settings:
     def __init__(self):
         self.running = True  # Когда окно действует
+        self.button_init(volume)
+
+    def button_init(self, volume):
+        # Заголовок Настроек, Звуковых эффектов и Сброса Результатов
+        self.settings_title = menu_text.render("SETTINGS", 0, (255, 255, 255))
+
+        if volume:
+            self.volume_title = menu_text.render(
+                "SOUND EFFECTS: ON", 0, (255, 255, 255))
+        else:
+            self.volume_title = menu_text.render(
+                "SOUND EFFECTS: OFF", 0, (255, 255, 255))
+        self.volume_rect = self.volume_title.get_rect().move(W_WINDOW * 0.125,
+                                                             H_WINDOW * 0.390625)
+
+        self.record_title = menu_text.render("RESET SCORES", 0, (255, 255, 255))
+        self.record_rect = self.record_title.get_rect().move(W_WINDOW * 0.125,
+                                                             H_WINDOW * 0.5859375)
 
     def run(self):
-        global volume  # Чтобы изменять громкость повсюду
-        # Заголовок Настроек, Звуковых эффектов и Сброса Результатов
-        settings_title = menu_text.render("SETTINGS", 0, (255, 255, 255))
-
-        volume_title = menu_text.render(
-            "SOUND EFFECTS: ON", 0, (255, 255, 255))
-        volume_rect = volume_title.get_rect().move(80, 200)
-
-        record_title = menu_text.render("RESET SCORES", 0, (255, 255, 255))
-        record_rect = record_title.get_rect().move(80, 300)
+        global volume
 
         while self.running:
             for event in pg.event.get():
@@ -453,6 +508,10 @@ class Settings:
                     game_quit()
                     self.running = False
 
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+
                 # Выход из игры нажатием ESC
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
@@ -460,7 +519,7 @@ class Settings:
 
                 # Когда кликаем на текст про звуковые эффекты
                 if event.type == pg.MOUSEBUTTONDOWN:
-                    if volume_rect.collidepoint(event.pos):
+                    if self.volume_rect.collidepoint(event.pos):
                         # Смена звуковых эффектов
                         click_sound.play()
                         if volume:
@@ -469,28 +528,21 @@ class Settings:
                             volume = True
                         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
 
-                    if record_rect.collidepoint(event.pos):
+                    if self.record_rect.collidepoint(event.pos):
                         # Сброс результатов
                         click_sound.play()
                         open('score.txt', 'w').close()
-            # Настройки звука, соотвествующий текст показывают
-            if volume:
-                volume_title = menu_text.render(
-                    "SOUND EFFECTS: ON", 0, (255, 255, 255))
-            else:
-                volume_title = menu_text.render(
-                    "SOUND EFFECTS: OFF", 0, (255, 255, 255))
-            # Логотип игры
-            image = load_image("logo.png")
-            image = pg.transform.scale(image, (144, 196))
 
             # Обновления кадра, путем заливки
             screen.fill((0, 0, 0))
-            # Добавить спрайты на экран
-            screen.blit(image, (400, 150))
-            screen.blit(settings_title, (80, 100))
-            screen.blit(volume_title, (80, 200))
-            screen.blit(record_title, (80, 300))
+            put_logo(screen)
+            self.button_init(volume)
+            screen.blit(self.settings_title, (W_WINDOW * 0.125,
+                                              H_WINDOW * 0.1953125))
+            screen.blit(self.volume_title, (W_WINDOW * 0.125,
+                                            H_WINDOW * 0.390625))
+            screen.blit(self.record_title, (W_WINDOW * 0.125,
+                                            H_WINDOW * 0.5859375))
             # Обновление кадра
             pg.display.flip()
         # Перейти в меню
@@ -534,14 +586,22 @@ class TutorialTerrain:
                     else:
                         click_sound.play()
                         StartMenu().run()
+
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
-            # Добавление слайдов
-            screen.blit(load_image("t" + str(self.slide) + ".png"), (0, 0))
+            # Добавление слайдов и их расположение
+            slide_img = load_image("t" + str(self.slide) + ".png")
+            slide_img = pg.transform.scale(slide_img, (int(H_WINDOW / 0.8),
+                                                       H_WINDOW))
+            slidex = W_WINDOW // 2 - slide_img.get_rect().size[0] // 2
+            slidey = H_WINDOW // 2 - slide_img.get_rect().size[1] // 2
+            screen.blit(slide_img, (slidex, slidey))
             if not self.show:
                 screen.blit(
                     start_menu_text.render("Click to slide",
-                                           0, (255, 255, 255)), (20, 20))
+                                           0, (255, 255, 255)), (slidex, slidey))
             # Обновление кадра
             pg.display.flip()
         # Переход в меню
