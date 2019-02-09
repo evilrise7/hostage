@@ -2573,8 +2573,9 @@ class SecretLevel:
         self.clock = pg.time.Clock()  # Внутриигровые часы
         self.children = 5  # Подсчет оставшихся полотенец(внутри дети)
         self.drop = []  # Лист собравшихся полотенец
+        # Текущий игрок
         self.player = Player(all_sprites,
-                             self, 30, 31, 64, "female")  # Текущий игрок
+                             self, 30, 31, H_WINDOW // 8, "female")
         self.inventory = Inventory()  # Текущий инвентарь
         self.camera = Camera()  # Текущая камера
         # К каждому полотенцу будет взято рандомные числа X, Y - его координаты
@@ -2637,6 +2638,7 @@ class SecretLevel:
         SecretTile('shower', 31, 30, self.player)
         SecretTile('left_eye', 29.5, 29, self.player)
         SecretTile('right_eye', 30.5, 29, self.player)
+
         # Загружаю полотенца
         self.list_victims = [SecretTile(
             'victim1', self.list_coordinates_victims[0],
@@ -2693,25 +2695,44 @@ class SecretLevel:
                             DrownedChildren().run()
             # Обновление игрока и инвентаря
             all_sprites.update()
+
+            # Подстройка размеров
+            self.screamer_img = pg.transform.scale(self.screamer_img,
+                                                   (W_WINDOW, H_WINDOW))
+            self.overlay = pg.transform.scale(self.overlay,
+                                              (W_WINDOW, H_WINDOW))
+
             # Затемненные края добавить
             screen.blit(self.overlay, (0, 0))
             self.inventory.render()
+
+            # Обновить инвентарь
             inventory_group.update()
             inventory_group.draw(screen)
+
             # Индикатор скримера
             self.screamer = random.randint(0, 500)
             # Если полотенца еще остались, то выходит
             # соответствующий текст
             if self.children > 0:
-                screen.blit(start_menu_text.render(
+                child_txt = start_menu_text.render(
                     "Find all " + str(self.children) + " towels",
-                    0, (255, 255, 255)), (110, 400))
+                    0, (255, 255, 255))
+                child_txt_w = child_txt.get_width() // 2
+                child_txt_h = 1.5 * child_txt.get_height()
+                screen.blit(child_txt, (W_WINDOW // 2 - child_txt_w,
+                                        H_WINDOW - child_txt_h))
             # Если все собрано, то игра завершается при нажатии
             # SPACE
             else:
-                screen.blit(start_menu_text.render(
+                cover_txt = start_menu_text.render(
                     "PRESS SPACE TO UNCOVER IT",
-                    0, (255, 255, 255)), (30, 400))
+                    0, (255, 255, 255))
+                cover_txt_w = cover_txt.get_width() // 2
+                cover_txt_h = 1.5 * cover_txt.get_height()
+                screen.blit(cover_txt, (W_WINDOW // 2 - cover_txt_w,
+                                        H_WINDOW - cover_txt_h))
+
             # Задержка скримера и его добавление на экран
             if self.screamer >= 495 and (self.player.vx or self.player.vy):
                 screen.blit(self.screamer_img, (0, 0))
@@ -2725,7 +2746,7 @@ class SecretLevel:
 class SecretTile(pg.sprite.Sprite):
     def __init__(self, types, x, y, player):
         super().__init__(secret_group)
-        self.cell_size = 64  # Размер ячейки
+        self.cell_size = H_WINDOW // 8  # Размер ячейки
         self.type = types  # Тип ячейки, для загрузки соответсвующего спрайта
         self.image = secret_images[types]  # Загрузка спрайта
         # Изменение размеров ячейки
@@ -2735,10 +2756,11 @@ class SecretTile(pg.sprite.Sprite):
         # Прямоугольная маска
         self.rect = self.image.get_rect().move(self.cell_size * x,
                                                self.cell_size * y)
+        self.halfsize = H_WINDOW // 16
 
     def collide_with_player(self):
-        if self.rect.collidepoint((self.player.rect.x + 32,
-                                   self.player.rect.y + 32)):
+        if self.rect.collidepoint((self.player.rect.x + self.halfsize,
+                                   self.player.rect.y + self.halfsize)):
             if "victim" in self.type:
                 pick_up_sound.play()
                 return 1
@@ -2767,4 +2789,5 @@ def create_particles(position):
 
 
 # Сам запуск всей игры
-open_menu()
+#open_menu()
+SecretLevel().run()
