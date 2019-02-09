@@ -614,53 +614,100 @@ class StartMenu:
         self.running = True
         self.gender = ""    # Половая принадлежность
         self.difficult = ""  # Сложность игры
+        # Картинки персонажей и текст " Выбрать персонажа "
+        self.martin_image = load_image("p.png")
+        self.margo_image = load_image("f.png")
+        self.objects_init()
+
+    def objects_init(self):
+        # Отступы слева
+        self.leftx = W_WINDOW * 0.15625
+        self.leftx_dif = W_WINDOW * 0.09375
+
+        # Персонаж Мартин и его прямоугольная маска
+        self.martin_txt = start_menu_text.render(
+            "MARTIN", 0, (100, 100, 100))
+        self.martin_rect = self.martin_txt.get_rect().move(
+            self.leftx, H_WINDOW * 0.546875)
+
+        # Персонаж Марго и ее прямоугольная маска
+        self.margo_txt = start_menu_text.render(
+            "MARGO", 0, (100, 100, 100))
+        self.rightx = W_WINDOW - self.leftx - self.margo_txt.get_width()
+        self.margo_rect = self.margo_txt.get_rect().move(
+            self.rightx, H_WINDOW * 0.546875)
+
+        # Легкая сложность
+        self.easy_txt = start_menu_text.render(
+            "EASY", 0, (100, 100, 100))
+        self.easy_rect = self.easy_txt.get_rect().move(
+            self.leftx_dif, H_WINDOW * 0.78125)
+
+        # Средняя сложность
+        self.medium_txt = start_menu_text.render(
+            "MEDIUM", 0, (100, 100, 100))
+        self.medium_x = W_WINDOW // 2 - self.medium_txt.get_width() // 2
+        self.medium_rect = self.medium_txt.get_rect().move(
+            self.medium_x, H_WINDOW * 0.78125)
+
+        # Высокая сложность
+        self.hardcore_txt = start_menu_text.render(
+            "HARD", 0, (100, 100, 100))
+        self.rightx_dif = W_WINDOW - self.leftx_dif - self.hardcore_txt.get_width()
+        self.hardcore_rect = self.hardcore_txt.get_rect().move(
+            self.rightx_dif, H_WINDOW * 0.78125)
+
+        # Изменение размеров картинок игроков
+        self.hero_size = int(H_WINDOW * 0.3828125)
+        self.martin_image = pg.transform.scale(
+            self.martin_image, (self.hero_size, self.hero_size))
+        self.margo_image = pg.transform.scale(
+            self.margo_image, (self.hero_size, self.hero_size))
+
+        # Заголовок
+        self.press_to_start = start_menu_text.render(
+            "CHOOSE A CHARACTER!", 0, (255, 255, 255))
+        self.start_txt_x = W_WINDOW // 2 - self.press_to_start.get_width() // 2
+
+        # Анимация текстов
+        self.animated_txt()
+
+    def animated_txt(self):
+        # Анимация текстов Персонажей
+        if self.gender == "female":
+            self.margo_txt = start_menu_text.render(
+                "MARGO", 0, (255, 255, 255))
+
+        if self.gender == "male":
+            self.martin_txt = start_menu_text.render(
+                "MARTIN", 0, (255, 255, 255))
+
+        # Анимация сложностей
+        if self.difficult == "easy":
+            self.easy_txt = start_menu_text.render(
+                "EASY", 0, (255, 255, 255))
+
+        if self.difficult == "medium":
+            self.medium_txt = start_menu_text.render(
+                "MEDIUM", 0, (255, 255, 255))
+
+        if self.difficult == "hardcore":
+            self.hardcore_txt = start_menu_text.render(
+                "HARD", 0, (255, 255, 255))
 
     def run(self):
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
-        # Персонаж Мартин и его прямоугольная маска
-        martin_txt = start_menu_text.render("MARTIN", 0, (100, 100, 100))
-        martin_rect = martin_txt.get_rect().move(100, 280)
-
-        # Персонаж Марго и ее прямоугольная маска
-        margo_txt = start_menu_text.render("MARGO", 0, (100, 100, 100))
-        margo_rect = margo_txt.get_rect().move(400, 280)
-
-        # Легкая сложность
-        easy_txt = start_menu_text.render("EASY", 0, (100, 100, 100))
-        easy_rect = easy_txt.get_rect().move(60, 400)
-
-        # Средняя сложность
-        medium_txt = start_menu_text.render("MEDIUM", 0, (100, 100, 100))
-        medium_rect = medium_txt.get_rect().move(240, 400)
-
-        # Высокая сложность
-        hardcore_txt = start_menu_text.render("HARD", 0, (100, 100, 100))
-        hardcore_rect = hardcore_txt.get_rect().move(470, 400)
-
-        # Картинки персонажей и текст " Выбрать персонажа "
-        martin_image = load_image("p.png")
-        martin_image = pg.transform.scale(martin_image, (196, 196))
-
-        margo_image = load_image("f.png")
-        margo_image = pg.transform.scale(margo_image, (196, 196))
-
-        press_to_start = start_menu_text.render("CHOOSE A CHARACTER!",
-                                                0, (255, 255, 255))
-
         while self.running:
-            # Изначально все тексты имеют прозрачность 50 - 60 %
-            easy_txt = start_menu_text.render("EASY", 0, (100, 100, 100))
-            medium_txt = start_menu_text.render("MEDIUM", 0, (100, 100, 100))
-            hardcore_txt = start_menu_text.render("HARD", 0, (100, 100, 100))
-
-            martin_txt = start_menu_text.render("MARTIN", 0, (100, 100, 100))
-            margo_txt = start_menu_text.render("MARGO", 0, (100, 100, 100))
-
             for event in pg.event.get():
                 # Закрыть окно
                 if event.type == pg.QUIT:
                     game_quit()
                     self.running = False
+
+                # Расширение экрана
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
 
                 if event.type == pg.KEYDOWN:
                     # Перейти в меню
@@ -675,75 +722,58 @@ class StartMenu:
 
                 if event.type == pg.MOUSEBUTTONDOWN:
                     # Выбор Мартина
-                    if martin_rect.collidepoint(event.pos):
+                    if self.martin_rect.collidepoint(event.pos):
                         self.gender = "male"
                         click_sound.play()
                     # Выбор Марго
-                    if margo_rect.collidepoint(event.pos):
+                    if self.margo_rect.collidepoint(event.pos):
                         self.gender = "female"
                         click_sound.play()
 
                     if self.gender:
                         # Если игрок выбрал персонажа, то сложности активны
-                        if easy_rect.collidepoint(event.pos):
+                        if self.easy_rect.collidepoint(event.pos):
                             self.difficult = "easy"
                             click_sound.play()
-                        if medium_rect.collidepoint(event.pos):
+                        if self.medium_rect.collidepoint(event.pos):
                             self.difficult = "medium"
                             click_sound.play()
-                        if hardcore_rect.collidepoint(event.pos):
+                        if self.hardcore_rect.collidepoint(event.pos):
                             self.difficult = "hardcore"
                             click_sound.play()
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
-
-            # Анимация текстов Персонажей
-            if self.gender == "female":
-                margo_txt = start_menu_text.render(
-                    "MARGO", 0, (255, 255, 255))
-
-            if self.gender == "male":
-                martin_txt = start_menu_text.render(
-                    "MARTIN", 0, (255, 255, 255))
-
-            # Анимация сложностей
-            if self.difficult == "easy":
-                easy_txt = start_menu_text.render(
-                    "EASY", 0, (255, 255, 255))
-
-            if self.difficult == "medium":
-                medium_txt = start_menu_text.render(
-                    "MEDIUM", 0, (255, 255, 255))
-
-            if self.difficult == "hardcore":
-                hardcore_txt = start_menu_text.render(
-                    "HARD", 0, (255, 255, 255))
-
+            self.objects_init()
             # Добавление объектов на экран
-            screen.blit(martin_image, (70, 80))
-            screen.blit(margo_image, (370, 80))
+            # self.hero_size/5 - чтобы выравнить картинки по центру текста
+            screen.blit(self.martin_image, (self.leftx - self.hero_size / 5,
+                                            H_WINDOW * 0.15625))
+            screen.blit(self.margo_image, (self.rightx - self.hero_size / 5,
+                                           H_WINDOW * 0.15625))
 
-            screen.blit(martin_txt, (100, 280))
-            screen.blit(margo_txt, (400, 280))
+            screen.blit(self.martin_txt, (self.leftx,
+                                          H_WINDOW * 0.546875))
+            screen.blit(self.margo_txt, (self.rightx,
+                                         H_WINDOW * 0.546875))
 
-            screen.blit(easy_txt, (60, 400))
-            screen.blit(medium_txt, (240, 400))
-            screen.blit(hardcore_txt, (470, 400))
+            screen.blit(self.easy_txt, (self.leftx_dif,
+                                        H_WINDOW * 0.78125))
+            screen.blit(self.medium_txt, (self.medium_x, H_WINDOW * 0.78125))
+            screen.blit(self.hardcore_txt, (self.rightx_dif,
+                                            H_WINDOW * 0.78125))
 
             # Если игрок выбрал все, что ему нужно
             if self.difficult != "" and self.gender != "":
-                press_to_start = start_menu_text.render(
+                self.press_to_start = start_menu_text.render(
                     "PRESS SPACE TO BEGIN!", 0, (255, 255, 255))
-                screen.blit(press_to_start, (70, 20))
 
             # Если игрок выбрал персонажа
             elif self.difficult == "" and self.gender:
-                press_to_start = start_menu_text.render(
+                self.press_to_start = start_menu_text.render(
                     "CHOOSE DIFFUCLTY!", 0, (255, 255, 255))
-                screen.blit(press_to_start, (130, 20))
-            # Если игрок только зашел в игру и ничего не выбрал
-            elif self.difficult == "" and self.gender == "":
-                screen.blit(press_to_start, (110, 20))
+
+            # Добавление заголовка выбора сложности и игрока
+            screen.blit(self.press_to_start, (self.start_txt_x, 0))
             # Обновление кадра
             pg.display.flip()
         # Переход в меню
@@ -768,16 +798,27 @@ class GameOver:
                     if event.key == pg.K_ESCAPE:
                         self.running = False
 
+                # Расширение экрана
+                if event.type == pg.VIDEORESIZE:
+                    window_resizing(event)
+                    change_font_size()
+
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             if psycho_level:
+                children_txt = start_menu_text.render(
+                    "Children.", 0, (255, 0, 0))
+                txt_x = W_WINDOW // 2 - children_txt.get_width() // 2
+                txt_y = H_WINDOW // 2 - children_txt.get_height() // 2
                 # Если открыт секретный уровень, будет изменен текст дети
-                screen.blit(start_menu_text.render(
-                    "Children.", 0, (255, 0, 0)), (200, 200))
+                screen.blit(children_txt, (txt_x, txt_y))
             else:
+                game_over_txt = start_menu_text.render(
+                    "Game Over", 0, (255, 0, 0))
+                txt_x = W_WINDOW // 2 - game_over_txt.get_width() // 2
+                txt_y = H_WINDOW // 2 - game_over_txt.get_height() // 2
                 # Если не открыт, будет изменен текст проигрыша
-                screen.blit(start_menu_text.render(
-                    "Game Over", 0, (255, 0, 0)), (200, 200))
+                screen.blit(game_over_txt, (txt_x, txt_y))
             # Обновление кадра
             pg.display.flip()
         # Перейти в меню
