@@ -1821,13 +1821,13 @@ class Game:
                                                   (self.cell, self.cell))
                 # Добавление текущего инструмента в руках героя на экран
                 screen.blit(start_menu_text.render(
-                    str(self.tool), 0, (255, 255, 255)),
-                    (self.cell_size, self.cell))
+                    str(self.tool), 0, (255, 255, 255)), (2, self.cell))
 
-                screen.blit(axe_scissors, (self.cell_size, 0))
+                screen.blit(axe_scissors, (0, 0))
                 screen.blit(
                     self.cursor,
-                    (self.cell * self.current_cursor_pos + W_WINDOW * 0.375, 0))
+                    (W_WINDOW - self.cell * (5 - self.current_cursor_pos),
+                     0))
             # Обновление кадра
             pg.display.flip()
         # Запуск меню
@@ -1972,8 +1972,8 @@ class Camera:
         self.height = 66 * H_WINDOW // 8  # Размер всей карты по ширине
         # Положение камеры берет разность середины экрана
         # и положения игрока вместе с его размерами
-        x = -target.rect.x - target.rect.w + int(W_WINDOW // 2)
-        y = -target.rect.y - target.rect.h + int(H_WINDOW // 2)
+        x = -target.rect.x - target.rect.w // 2 + W_WINDOW // 2
+        y = -target.rect.y - target.rect.h // 2 + H_WINDOW // 2
 
         '''
         Ограничения(экстремумы) координат, нужны для того
@@ -2197,6 +2197,9 @@ class Player(pg.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
+        self.rect = pg.Rect(self.rect.x, self.rect.y,
+                            H_WINDOW // 8, H_WINDOW // 8)
+
 
 # Инвентарь
 class Inventory:
@@ -2241,10 +2244,13 @@ class Inventory:
                 InventoryTile('victim4', i)
             if self.inv[0][i] == "victim5" and self.inv[1][i] != 0:
                 InventoryTile('victim5', i)
-            # Добавление ячеек инвентаря на экран
-            screen.blit(start_menu_text.render(str(self.inv[1][i]),
-                                               0, (255, 255, 255)),
-                        (self.cell_size * i + W_WINDOW * 0.375,
+            # Добавление ячеек текста инвентаря на экран
+            txt_item = start_menu_text.render(
+                str(self.inv[1][i]), 0, (255, 255, 255))
+
+            txt_w = txt_item.get_width()
+            screen.blit(txt_item,
+                        (W_WINDOW - self.cell_size * (5 - i) + txt_w,
                          self.cell_size))
 
     def append(self, type_obj):
@@ -2332,7 +2338,7 @@ class InventoryTile(pg.sprite.Sprite):
                                         (self.cell_size, self.cell_size))
         # Прямоугольная маска спрайта
         self.rect = self.image.get_rect().move(
-            self.cell_size * self.x + W_WINDOW * 0.375, 0)
+            W_WINDOW - self.cell_size * (5 - self.x), 0)
 
 
 # Выпадение вещей
@@ -2368,7 +2374,9 @@ class Drop(pg.sprite.Sprite):
 # Частицы крови
 class Blood(pg.sprite.Sprite):
     fire = [load_image("blood.png")]
-    for scale in (5, 10, 20):
+    # Размеры под расширения экрана частиц
+    scale_list = [W_WINDOW // 24, H_WINDOW // 24, W_WINDOW // 32]
+    for scale in (scale_list[2], scale_list[1], scale_list[0]):
         fire.append(pg.transform.scale(fire[0], (scale, scale)))
 
     def __init__(self, pos, dx, dy):
@@ -2386,7 +2394,8 @@ class Blood(pg.sprite.Sprite):
 
     def update(self):
         global screen_rect
-        screen_rect = (0, 0, W_WINDOW * 64, H_WINDOW * 64)
+        screen_rect = (0, 0, H_WINDOW // 8 * 64,
+                       H_WINDOW // 8 * 64)
         # применяем гравитационный эффект:
         # движение с ускорением под действием гравитации
         self.velocity[1] += self.gravity
@@ -2432,7 +2441,7 @@ class Cow(pg.sprite.Sprite):
 
         self.movement(random.randint(0, 4))  # Случайный выбор движения
 
-        self.hp = 10    # Жизнь коровки
+        self.hp = random.randint(20, 30)    # Жизнь коровки
 
     def check_hp(self):
         if self.hp < 1:  # Если коровка уже не в Индии
@@ -2548,6 +2557,9 @@ class Cow(pg.sprite.Sprite):
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
         self.rect.y = self.y
+
+        self.rect = pg.Rect(self.rect.x, self.rect.y,
+                            H_WINDOW // 8, H_WINDOW // 8)
 
 
 # Секретный уровень
