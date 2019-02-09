@@ -233,14 +233,17 @@ class Menu:
     def resize_rect_button(self):
         global W_WINDOW, H_WINDOW, screen
         # Начать игру, Результаты, Настройки и Выход
-        self.start_game_rect = self.start_game.get_rect().move(W_WINDOW * 0.125,
-                                                               H_WINDOW * 0.29296875)
-        self.record_rect = self.record_txt.get_rect().move(W_WINDOW * 0.125,
-                                                           H_WINDOW * 0.390625)
-        self.settings_rect = self.settings_txt.get_rect().move(W_WINDOW * 0.125,
-                                                               H_WINDOW * 0.48828125)
-        self.exit_rect = self.exit_txt.get_rect().move(W_WINDOW * 0.125,
-                                                       H_WINDOW * 0.5859375)
+        self.start_game_rect = self.start_game.get_rect().move(
+            W_WINDOW * 0.125, H_WINDOW * 0.29296875)
+
+        self.record_rect = self.record_txt.get_rect().move(
+            W_WINDOW * 0.125, H_WINDOW * 0.390625)
+
+        self.settings_rect = self.settings_txt.get_rect().move(
+            W_WINDOW * 0.125, H_WINDOW * 0.48828125)
+
+        self.exit_rect = self.exit_txt.get_rect().move(
+            W_WINDOW * 0.125, H_WINDOW * 0.5859375)
 
     def run(self):
         global W_WINDOW, H_WINDOW, screen
@@ -347,8 +350,11 @@ class Level:
         while self.running:
             change_font_size()  # Адаптация шрифта
             # Позиция уровней по OY
-            pos_lvl_terrain = H_WINDOW // 2 - self.level_terrain.get_rect().size[1] // 2
-            pos_secret = H_WINDOW // 2 - self.level_secret.get_rect().size[1] // 2
+            pos_lvl_ter_y = self.level_terrain.get_rect().size[1] // 2
+            pos_lvl_terrain = H_WINDOW // 2 - pos_lvl_ter_y
+
+            pos_lvl_sec_y = self.level_secret.get_rect().size[1] // 2
+            pos_secret = H_WINDOW // 2 - pos_lvl_sec_y
 
             # Маски спрайтов из прямоугольника для клика
             self.level_terrain_rect = self.level_terrain.get_rect().move(
@@ -393,9 +399,11 @@ class Level:
                                                    (W_WINDOW // 2,
                                                     int(W_WINDOW // 2 * 0.8)))
             # Добавление объектов на экран
-            screen.blit(self.choose_level_txt,
-                        (W_WINDOW // 2 - self.choose_level_txt.get_width() // 2,
-                         H_WINDOW * 0.0390625))
+            screen.blit(
+                self.choose_level_txt,
+                (W_WINDOW // 2 - self.choose_level_txt.get_width() // 2,
+                 H_WINDOW * 0.0390625))
+
             screen.blit(self.level_terrain, (0, pos_lvl_terrain))
             # Если секретный уровень открыт, добавить его выбор на экран
             if self.level:
@@ -491,12 +499,13 @@ class Settings:
         else:
             self.volume_title = menu_text.render(
                 "SOUND EFFECTS: OFF", 0, (255, 255, 255))
-        self.volume_rect = self.volume_title.get_rect().move(W_WINDOW * 0.125,
-                                                             H_WINDOW * 0.390625)
+        self.volume_rect = self.volume_title.get_rect().move(
+            W_WINDOW * 0.125, H_WINDOW * 0.390625)
 
-        self.record_title = menu_text.render("RESET SCORES", 0, (255, 255, 255))
-        self.record_rect = self.record_title.get_rect().move(W_WINDOW * 0.125,
-                                                             H_WINDOW * 0.5859375)
+        self.record_title = menu_text.render(
+            "RESET SCORES", 0, (255, 255, 255))
+        self.record_rect = self.record_title.get_rect().move(
+            W_WINDOW * 0.125, H_WINDOW * 0.5859375)
 
     def run(self):
         global volume
@@ -601,9 +610,8 @@ class TutorialTerrain:
             slidey = H_WINDOW // 2 - slide_img.get_rect().size[1] // 2
             screen.blit(slide_img, (slidex, slidey))
             if not self.show:
-                screen.blit(
-                    start_menu_text.render("Click to slide",
-                                           0, (255, 255, 255)), (slidex, slidey))
+                screen.blit(start_menu_text.render(
+                    "Click to slide", 0, (255, 255, 255)), (slidex, slidey))
             # Обновление кадра
             pg.display.flip()
         # Переход в меню
@@ -655,7 +663,10 @@ class StartMenu:
         # Высокая сложность
         self.hardcore_txt = start_menu_text.render(
             "HARD", 0, (100, 100, 100))
-        self.rightx_dif = W_WINDOW - self.leftx_dif - self.hardcore_txt.get_width()
+        # Не помещалось из-за PEP8 формула
+        otstup_right = self.leftx_dif - self.hardcore_txt.get_width()
+        self.rightx_dif = W_WINDOW - otstup_right
+
         self.hardcore_rect = self.hardcore_txt.get_rect().move(
             self.rightx_dif, H_WINDOW * 0.78125)
 
@@ -2485,9 +2496,11 @@ class Cow(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stay"
             if self.mirrored:
-                self.cut_sheet(load_image("cm" + str(self.type_obj) + "_sheet.png"))
+                self.cut_sheet(load_image(
+                    "cm" + str(self.type_obj) + "_sheet.png"))
             else:
-                self.cut_sheet(load_image("c" + str(self.type_obj) + "_sheet.png"))
+                self.cut_sheet(load_image(
+                    "c" + str(self.type_obj) + "_sheet.png"))
 
         # Если коровка идет налево
         if b == 1:
@@ -2512,9 +2525,11 @@ class Cow(pg.sprite.Sprite):
             self.state = "run"
             # Чтобы коровка могла смотреть по сторонам(отражение)
             if self.mirrored:
-                self.cut_sheet(load_image("cm" + str(self.type_obj) + "_sheet.png"))
+                self.cut_sheet(load_image(
+                    "cm" + str(self.type_obj) + "_sheet.png"))
             else:
-                self.cut_sheet(load_image("c" + str(self.type_obj) + "_sheet.png"))
+                self.cut_sheet(load_image(
+                    "c" + str(self.type_obj) + "_sheet.png"))
 
     def update(self):
         # Таймер побега от игрока
