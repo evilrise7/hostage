@@ -664,8 +664,8 @@ class StartMenu:
         self.hardcore_txt = start_menu_text.render(
             "HARD", 0, (100, 100, 100))
         # Не помещалось из-за PEP8 формула
-        otstup_right = self.leftx_dif - self.hardcore_txt.get_width()
-        self.rightx_dif = W_WINDOW - otstup_right
+        self.steprx = self.leftx_dif + self.hardcore_txt.get_width()
+        self.rightx_dif = W_WINDOW - self.steprx
 
         self.hardcore_rect = self.hardcore_txt.get_rect().move(
             self.rightx_dif, H_WINDOW * 0.78125)
@@ -1084,8 +1084,6 @@ class Game:
                                  self.cell_size))
         self.drop = []
         self.tmpmobs = []  # Буферный лист живых существ
-        # Лист, чтобы прослеживать уже добавленные предметы
-        self.tmplist = []
 
         # Установка интервала пожирания границ мира,
         # в зависимости от сложности
@@ -1269,25 +1267,22 @@ class Game:
                     self.mobs[i].hp -= 1
                     hit_sound.play()
 
+                # Животное отлетает от игрока при ударе
+                self.mobs[i].timer_run = 3  # включить режим побега
                 # Проверка, куда бежать от игрока
                 if self.player.rect.y < self.mobs[i].rect.y:
                     self.mobs[i].movement(4)
 
-                if self.player.rect.y > self.mobs[i].rect.y:
+                elif self.player.rect.y > self.mobs[i].rect.y:
                     self.mobs[i].movement(3)
 
-                if self.player.mirrored:
+                elif self.player.mirrored:
                     self.mobs[i].movement(2)
 
-                if not self.player.mirrored:
+                elif not self.player.mirrored:
                     self.mobs[i].movement(1)
 
-                else:
-                    self.mobs[i].movement(random.randint(1, 4))
-
-                self.mobs[i].vx = 0
-                self.mobs[i].vy = 0
-                self.mobs[i].timer_run = 3
+                self.mobs[i].update()  # Задать коровке новые параметры
 
                 if self.mobs[i].check_hp():
                     # Беру координаты игрока, т.к. PEP8 ругался
@@ -1296,7 +1291,6 @@ class Game:
                             (self.cell_size * self.cell_size) * self.cell_size)
                     y = int((self.player.rect.y + self.halfsize) /
                             (self.cell_size * self.cell_size) * self.cell_size)
-                    print(x, y)
                     # Если живое существо имеет жизни == 0, то оно погибает
                     cow_died.play()
                     self.mobs[i].kill()
@@ -1343,6 +1337,8 @@ class Game:
                         self.craft.craft_type = 1
 
     def drop_clean(self):
+        # Лист, чтобы прослеживать уже добавленные предметы
+        self.tmplist = []
         # Очистка упавших вещей
         if self.drop:
             for i in range(len(self.drop)):
@@ -1355,8 +1351,6 @@ class Game:
         # Если буферный лист забит, то лист упавших вещей
         # удаляет элементы, содержащиеся в буферном листе
         if self.tmplist and self.drop:
-            print(self.tmplist)
-            print(self.drop)
             for i in range(len(self.tmplist)):
                 del self.drop[self.tmplist[i]]
         # Очистка буферного листа
@@ -1604,6 +1598,7 @@ class Game:
             xr = x + 1  # Клетка справа
             yu = y - 1  # Клетка сверху
             yd = y + 1  # Клетка снизу
+
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
             # Если пауза не активирована
