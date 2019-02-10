@@ -183,6 +183,7 @@ entity_images = {"green": load_image('green.png'),
                  "flowers": load_image('flowers.png'),
                  "rock": load_image('rock.png'),
                  "bush": load_image('bush.png'),
+                 "skull": load_image('skull.png'),
                  "meat": load_image('meat_entity.png'),
                  "gold_sword": load_image('gold_sword_entity.png'),
                  "silver_sword": load_image('silver_sword_entity.png'),
@@ -1127,17 +1128,43 @@ class Game:
         self.gender()
 
     def update_tiles(self):
+        entity_list = []  # Лист для заполнения заднего плана
+        cow_list = []  # Лист для заполнения заднего плана коров
         # Обновление всех спрайтов вдоль камеры
         for sprite in tiles_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
 
-        for sprite in entities_group:
-            screen.blit(sprite.image, self.camera.apply(sprite))
-
-        for sprite in animal_group:
-            screen.blit(sprite.image, self.camera.apply(sprite))
-
         for sprite in all_sprites:
+            # Если игрок касается природного объекта,
+            # то он выходит на передний план,
+            # если он уже по оси Оу далеко от него
+            for entity in entities_group:
+                if entity.rect.colliderect(sprite.rect):
+                    if sprite.rect.y + H_WINDOW // 32 < entity.rect.y:
+                        entity_list.append(entity)
+                if entity not in entity_list:
+                    screen.blit(entity.image, self.camera.apply(entity))
+
+            # Если игрок касается коровы,
+            # то он выходит на передний план,
+            # если он уже по оси Оу далеко от нее
+            for animal in animal_group:
+                if animal.rect.colliderect(sprite.rect):
+                    if sprite.rect.y + H_WINDOW // 32 < animal.rect.y:
+                        cow_list.append(animal)
+
+                if animal not in cow_list:
+                    # Отображаю жизни животных
+                    pos = self.camera.apply(animal)
+                    if animal.hp:
+                        screen.blit(menu_text.render(
+                            str(animal.hp) + "HP", 0, (255, 255, 255)),
+                            (pos[0], pos[1] - self.cell // 1.8))
+                    screen.blit(animal.image, self.camera.apply(animal))
+
+        # Игрок
+        for sprite in all_sprites:
+            # для игрока
             pos = self.camera.apply(sprite)
             # Отображаю инструмент игрока относительно него
             if not sprite.mirrored:
@@ -1156,19 +1183,29 @@ class Game:
 
             screen.blit(sprite.image, self.camera.apply(sprite))
 
+        # Частицы
         for sprite in particle_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
 
+        # Выпавшие вещи
         for sprite in drop_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
 
-        for sprite in animal_group:
-            # Отображаю жизни животных
-            pos = self.camera.apply(sprite)
-            if sprite.hp:
-                screen.blit(menu_text.render(
-                    str(sprite.hp) + "HP", 0, (255, 255, 255)),
-                    (pos[0], pos[1] - self.cell // 1.8))
+        # Коровы заднего плана
+        for animal in animal_group:
+            if animal in cow_list:
+                # Отображаю жизни животных
+                pos = self.camera.apply(animal)
+                if animal.hp:
+                    screen.blit(menu_text.render(
+                        str(animal.hp) + "HP", 0, (255, 255, 255)),
+                        (pos[0], pos[1] - self.cell // 1.8))
+                screen.blit(animal.image, self.camera.apply(animal))
+
+        # Природные объекты заднего плана
+        for entity in entities_group:
+            if entity in entity_list:
+                screen.blit(entity.image, self.camera.apply(entity))
 
     def world_cutting(self):
         # Если таймер уничтожения границ больше, чем
@@ -1488,6 +1525,7 @@ class Game:
             self.world.entities[yd][x] = 0
             self.append_drop(x, yd)
             ifdestroy = True
+
         # Снизу, если это мясной блок
         if self.world.entities[yd][x] == 5:
             self.world.entities[yd][x] = 0
@@ -1902,6 +1940,7 @@ class TileMap:
                 # Трава
                 if self.world_array[j][i] == 0:
                     Tile('grass', i, j)
+
                     if not self.entities_enabled:
                         entity = random.randint(0, 100)
                         if entity < 40:
@@ -1915,7 +1954,9 @@ class TileMap:
                     Tile('sand', i, j)
                     if not self.entities_enabled:
                         entity = random.randint(0, 100)
-                        if entity < 4:
+                        if entity < 20:
+                            self.entities[j][i] = 4.5
+                        if 30 > entity > 20:
                             self.entities[j][i] = 4
                 # Камень
                 if self.world_array[j][i] == 2:
@@ -1946,6 +1987,9 @@ class TileMap:
                 # Камень
                 if self.entities[j][i] == 4:
                     Entity('rock', i, j)
+                # Череп
+                if self.entities[j][i] == 4.5:
+                    Entity('skull', i, j)
                 # Мясо
                 if self.entities[j][i] == 5:
                     Entity('meat', i, j)
@@ -2381,7 +2425,7 @@ class Drop(pg.sprite.Sprite):
 class Blood(pg.sprite.Sprite):
     fire = [load_image("blood.png")]
     # Размеры под расширения экрана частиц
-    scale_list = [W_WINDOW // 24, H_WINDOW // 24, W_WINDOW // 32]
+    scale_list = [W_WINDOW // 30, H_WINDOW // 30, W_WINDOW // 36]
     for scale in (scale_list[2], scale_list[1], scale_list[0]):
         fire.append(pg.transform.scale(fire[0], (scale, scale)))
 
