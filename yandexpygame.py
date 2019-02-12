@@ -1625,7 +1625,9 @@ class Game:
         drop_group.update()
 
     def run(self):
-        screen = pg.display.set_mode((W_WINDOW, H_WINDOW))
+        # Окно изменяется, типа супер технологичный ход
+        screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.NOFRAME)
+
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         # Загружаю мир и инвентарь
         self.world.render()
@@ -1643,7 +1645,6 @@ class Game:
         quit_rect = quit_txt.get_rect().move(W_WINDOW * 0.09375,
                                              H_WINDOW * 0.3125)
         while self.running:
-            print(str(int(self.clock.get_fps())))
             self.mapwidth = 66 * H_WINDOW // 8
             # Положение игрока внутри матрицы мира
             x = int((self.player.rect.x + self.halfsize) / self.mapwidth * 66)
@@ -1655,6 +1656,7 @@ class Game:
 
             # Обновление кадра, путем заливки
             screen.fill((0, 0, 0))
+
             # Если пауза не активирована
             if not self.pause:
                 pg.mouse.set_visible(False)  # Скрыть курсор
@@ -1711,6 +1713,10 @@ class Game:
                 if event.type == pg.KEYDOWN:
                     # Очистка дропа, если касается игрок.
                     self.drop_clean()
+
+                    # Выход из игры кнопкой Q
+                    if event.key == pg.K_q:
+                        game_quit()
 
                     if not self.pause:  # Пока не пауза
                         # Открытие меню паузы
@@ -1902,6 +1908,7 @@ class TileMap:
         self.h = 66  # Ширина мира
         # Карта поверхностей
         self.world_array = [[0] * self.w for _ in range(self.h)]
+        self.world_array_backup = [[50] * self.w for _ in range(self.h)]
         # Карта природных объектов
         self.entities = [[0] * self.w for _ in range(self.h)]
         self.generation()  # Генерация мира
@@ -1929,6 +1936,7 @@ class TileMap:
                     self.world_array[j][i] = 1
                 else:
                     self.world_array[j][i] = 2
+
         # Начертание границ по длине
         for i in range(self.w):
             self.world_array[0][i] = -1
@@ -1938,18 +1946,19 @@ class TileMap:
         for i in range(self.h):
             self.world_array[i][0] = -1
             self.world_array[i][-1] = -1
-        self.world_array_backup = self.world_array
 
     def render(self):
         # Очистка групп спрайтов для разгрузки памяти
         tiles_group.empty()
         entities_group.empty()
+
         # Заполнение спрайтами мира
         for i in range(self.w):
             for j in range(self.h):
                 # Границы мира
                 if self.world_array[j][i] == -1:
                     Tile('empty', i, j)
+
                     # Природные объекты за границами - уничтожаются
                     if self.entities[j][i] != 0:
                         self.entities[j][i] = 0
@@ -1982,6 +1991,7 @@ class TileMap:
                         entity = random.randint(0, 100)
                         if entity < 11:
                             self.entities[j][i] = 4
+
                 '''
                 Если генерация мира не произведена
                 то природные объекты генерируются
@@ -1992,33 +2002,41 @@ class TileMap:
                 '''
                 if self.entities[j][i] == -2:
                     Entity('blood', i, j)
+
                 # Трава
                 if self.entities[j][i] == 1:
                     Entity('green', i, j)
+
                 # Цветы
                 if self.entities[j][i] == 2:
                     Entity('flowers', i, j)
+
                 # Кусты
                 if self.entities[j][i] == 3:
                     Entity('bush', i, j)
+
                 # Камень
                 if self.entities[j][i] == 4:
                     Entity('rock', i, j)
+
                 # Череп
                 if self.entities[j][i] == 4.5:
                     Entity('skull', i, j)
+
                 # Мясо
                 if self.entities[j][i] == 5:
                     Entity('meat', i, j)
+
                 # Золотой меч
                 if self.entities[j][i] == 6:
                     Entity('gold_sword', i, j)
+
                 # Серебрянный меч
                 if self.entities[j][i] == 7:
                     Entity('silver_sword', i, j)
+
         # После первой генерации мира, больше нет права генерировать
         self.entities_enabled = True
-        self.world_array_backup = self.world_array
 
 
 # Камера
@@ -2067,9 +2085,6 @@ class Tile(pg.sprite.Sprite):
         self.y = y
         self.type = types  # Тип ячейки, для загрузки соответсвующего спрайта
         self.image = tile_images[types]  # Загрузка спрайта
-        self.update()
-
-    def update(self):
         self.cell_size = H_WINDOW // 8
         # Изменение размеров ячейки
         self.image = pg.transform.scale(self.image,
@@ -2086,9 +2101,6 @@ class Entity(pg.sprite.Sprite):
         self.x = x
         self.y = y
         self.image = entity_images[types]   # Спрайт из словаря
-        self.update()
-
-    def update(self):
         self.cell_size = H_WINDOW // 8  # Размер клетки
         # Изменение размеров изображения
         self.image = pg.transform.scale(self.image,
@@ -2704,7 +2716,8 @@ class SecretLevel:
                 del self.drop[self.tmplist[i]]
 
     def run(self):
-        screen = pg.display.set_mode((W_WINDOW, H_WINDOW))
+        # Еще один технологичный ход
+        screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.NOFRAME)
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         inventory_group.empty()
         # Загружаю мир и инвентарь
@@ -2765,6 +2778,11 @@ class SecretLevel:
                     if event.key == pg.K_SPACE:
                         if self.children <= 0:
                             DrownedChildren().run()
+
+                    # Выход из игры кнопкой Q
+                    if event.key == pg.K_q:
+                        game_quit()
+
             # Обновление игрока и инвентаря
             all_sprites.update()
 
