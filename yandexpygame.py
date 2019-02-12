@@ -20,6 +20,7 @@ pg.display.set_icon(pg.image.load("sprites/icon.png"))
 W_WINDOW = 640
 H_WINDOW = 512
 screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
+screen.set_alpha(None)
 pg.key.set_repeat(500, 10)
 
 # Три варианта текста, которых достаточно для оформления меню
@@ -247,7 +248,6 @@ class Menu:
             W_WINDOW * 0.125, H_WINDOW * 0.5859375)
 
     def run(self):
-        global W_WINDOW, H_WINDOW, screen
         self.resize_rect_button()
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
         while self.running:
@@ -1134,6 +1134,16 @@ class Game:
         for sprite in tiles_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
 
+        for animal in animal_group:
+            # Если корова касается природных объектов,
+            # то она выходит на передний план,
+            # если он уже по оси Оу далеко от нее
+            for entity in entities_group:
+                if entity.rect.colliderect(animal.rect):
+                    if animal.rect.y + H_WINDOW // 32 < entity.rect.y:
+                        if entity not in entity_list:
+                            entity_list.append(entity)
+
         for sprite in all_sprites:
             # Если игрок касается природного объекта,
             # то он выходит на передний план,
@@ -1150,16 +1160,6 @@ class Game:
                 if animal.rect.colliderect(sprite.rect):
                     if sprite.rect.y + H_WINDOW // 32 < animal.rect.y:
                         cow_list.append(animal)
-
-        for animal in animal_group:
-            # Если корова касается природных объектов,
-            # то она выходит на передний план,
-            # если он уже по оси Оу далеко от нее
-            for entity in entities_group:
-                if entity.rect.colliderect(animal.rect):
-                    if animal.rect.y + H_WINDOW // 32 < entity.rect.y:
-                        if entity not in entity_list:
-                            entity_list.append(entity)
 
         # Загрузка заднего плана
         for entity in entities_group:
@@ -1643,6 +1643,7 @@ class Game:
         quit_rect = quit_txt.get_rect().move(W_WINDOW * 0.09375,
                                              H_WINDOW * 0.3125)
         while self.running:
+            print(str(int(self.clock.get_fps())))
             self.mapwidth = 66 * H_WINDOW // 8
             # Положение игрока внутри матрицы мира
             x = int((self.player.rect.x + self.halfsize) / self.mapwidth * 66)
@@ -1937,6 +1938,7 @@ class TileMap:
         for i in range(self.h):
             self.world_array[i][0] = -1
             self.world_array[i][-1] = -1
+        self.world_array_backup = self.world_array
 
     def render(self):
         # Очистка групп спрайтов для разгрузки памяти
@@ -2016,6 +2018,7 @@ class TileMap:
                     Entity('silver_sword', i, j)
         # После первой генерации мира, больше нет права генерировать
         self.entities_enabled = True
+        self.world_array_backup = self.world_array
 
 
 # Камера
