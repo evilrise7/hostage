@@ -1142,8 +1142,6 @@ class Game:
                 if entity.rect.colliderect(sprite.rect):
                     if sprite.rect.y + H_WINDOW // 32 < entity.rect.y:
                         entity_list.append(entity)
-                if entity not in entity_list:
-                    screen.blit(entity.image, self.camera.apply(entity))
 
             # Если игрок касается коровы,
             # то он выходит на передний план,
@@ -1153,14 +1151,31 @@ class Game:
                     if sprite.rect.y + H_WINDOW // 32 < animal.rect.y:
                         cow_list.append(animal)
 
-                if animal not in cow_list:
-                    # Отображаю жизни животных
-                    pos = self.camera.apply(animal)
-                    if animal.hp:
-                        screen.blit(menu_text.render(
-                            str(animal.hp) + "HP", 0, (255, 255, 255)),
-                            (pos[0], pos[1] - self.cell // 1.8))
-                    screen.blit(animal.image, self.camera.apply(animal))
+        for animal in animal_group:
+            # Если корова касается природных объектов,
+            # то она выходит на передний план,
+            # если он уже по оси Оу далеко от нее
+            for entity in entities_group:
+                if entity.rect.colliderect(animal.rect):
+                    if animal.rect.y + H_WINDOW // 32 < entity.rect.y:
+                        if entity not in entity_list:
+                            entity_list.append(entity)
+
+        # Загрузка заднего плана
+        for entity in entities_group:
+            if entity not in entity_list:
+                screen.blit(entity.image, self.camera.apply(entity))
+
+        # Животные
+        for animal in animal_group:
+            if animal not in cow_list:
+                # Отображаю жизни животных
+                pos = self.camera.apply(animal)
+                if animal.hp:
+                    screen.blit(menu_text.render(
+                        str(animal.hp) + "HP", 0, (255, 255, 255)),
+                        (pos[0], pos[1] - self.cell // 1.8))
+                screen.blit(animal.image, self.camera.apply(animal))
 
         # Игрок
         for sprite in all_sprites:
@@ -1202,7 +1217,7 @@ class Game:
                         (pos[0], pos[1] - self.cell // 1.8))
                 screen.blit(animal.image, self.camera.apply(animal))
 
-        # Природные объекты заднего плана
+        # Природные объекты переднего плана
         for entity in entities_group:
             if entity in entity_list:
                 screen.blit(entity.image, self.camera.apply(entity))
