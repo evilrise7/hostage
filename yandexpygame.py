@@ -108,6 +108,7 @@ def clear_tiles():
     animal_group.empty()
     drop_group.empty()
     inventory_group.empty()
+    secret_group.empty()
 
 
 # Кордировщик для честности
@@ -2725,8 +2726,7 @@ class SecretLevel:
         # Еще один технологичный ход
         screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.NOFRAME)
         enable_sfx()  # Проверка Вкл/Выкл звуковых эффектов
-        inventory_group.empty()
-        # Загружаю мир и инвентарь
+        # Загружаю мир
         SecretTile('bath', 30, 30, self.player)
         SecretTile('shower', 31, 30, self.player)
         SecretTile('left_eye', 29.5, 29, self.player)
