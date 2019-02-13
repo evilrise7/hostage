@@ -17,10 +17,10 @@ pg.display.set_caption("Hell Obtained Sensible Tiny And Geniusly Emmy.")
 pg.display.set_icon(pg.image.load("sprites/icon.png"))
 
 # Разрешение экрана и залипание клавиш(для передвижения игрока в игре)
-W_WINDOW = 640
-H_WINDOW = 512
+W_WINDOW = 1280
+H_WINDOW = 720
 screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
-screen.set_alpha(None)
+screen.set_alpha(None)  # Убирает лишнюю прозрачность. Буст +3 FPS
 pg.key.set_repeat(500, 10)
 
 # Три варианта текста, которых достаточно для оформления меню
@@ -215,7 +215,9 @@ drop_images = {"meat": load_image('meat.png'),
 # Переменная отвечает за запуск секретного уровня
 psycho_level = 0
 # Переменная ограничитель для частиц
-screen_rect = (0, 0, W_WINDOW * 64, H_WINDOW * 64)
+# H_WINDOW // 8 = Размер клетки на экране
+screen_rect = (0, 0, H_WINDOW // 8 * 66,
+               H_WINDOW // 8 * 66)
 
 
 # Класс меню
@@ -1130,6 +1132,7 @@ class Game:
     def update_tiles(self):
         entity_list = []  # Лист для заполнения заднего плана
         cow_list = []  # Лист для заполнения заднего плана коров
+
         # Обновление всех спрайтов вдоль камеры
         for sprite in tiles_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
@@ -1222,6 +1225,12 @@ class Game:
             if entity in entity_list:
                 screen.blit(entity.image, self.camera.apply(entity))
 
+        # Края карты
+        pg.draw.rect(screen, (0, 0, 0),
+                     (self.camera.camera.x, self.camera.camera.y,
+                      66 * H_WINDOW // 8, 66 * H_WINDOW // 8),
+                     H_WINDOW // 4 * self.step)
+
     def world_cutting(self):
         # Если таймер уничтожения границ больше, чем
         # заданное время уничтожения границ по сложности
@@ -1243,7 +1252,6 @@ class Game:
             # природных объектов и животных
             self.world.render()
 
-            tiles_group.update()
             entities_group.update()
             animal_group.update()
 
@@ -1908,7 +1916,6 @@ class TileMap:
         self.h = 66  # Ширина мира
         # Карта поверхностей
         self.world_array = [[0] * self.w for _ in range(self.h)]
-        self.world_array_backup = [[50] * self.w for _ in range(self.h)]
         # Карта природных объектов
         self.entities = [[0] * self.w for _ in range(self.h)]
         self.generation()  # Генерация мира
@@ -1947,9 +1954,11 @@ class TileMap:
             self.world_array[i][0] = -1
             self.world_array[i][-1] = -1
 
+        # Очистка карты полностью
+        tiles_group.empty()
+
     def render(self):
         # Очистка групп спрайтов для разгрузки памяти
-        tiles_group.empty()
         entities_group.empty()
 
         # Заполнение спрайтами мира
@@ -1957,17 +1966,14 @@ class TileMap:
             for j in range(self.h):
                 # Границы мира
                 if self.world_array[j][i] == -1:
-                    Tile('empty', i, j)
-
                     # Природные объекты за границами - уничтожаются
                     if self.entities[j][i] != 0:
                         self.entities[j][i] = 0
 
                 # Трава
                 if self.world_array[j][i] == 0:
-                    Tile('grass', i, j)
-
                     if not self.entities_enabled:
+                        Tile('grass', i, j)
                         entity = random.randint(0, 100)
                         if entity < 40:
                             self.entities[j][i] = 1
@@ -1977,8 +1983,8 @@ class TileMap:
                             self.entities[j][i] = 3
                 # Песок
                 if self.world_array[j][i] == 1:
-                    Tile('sand', i, j)
                     if not self.entities_enabled:
+                        Tile('sand', i, j)
                         entity = random.randint(0, 100)
                         if entity < 20:
                             self.entities[j][i] = 4.5
@@ -1986,8 +1992,8 @@ class TileMap:
                             self.entities[j][i] = 4
                 # Камень
                 if self.world_array[j][i] == 2:
-                    Tile('stone', i, j)
                     if not self.entities_enabled:
+                        Tile('stone', i, j)
                         entity = random.randint(0, 100)
                         if entity < 11:
                             self.entities[j][i] = 4
