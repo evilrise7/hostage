@@ -17,8 +17,8 @@ pg.display.set_caption("Hell Obtained Sensible Tiny And Geniusly Emmy.")
 pg.display.set_icon(pg.image.load("sprites/icon.png"))
 
 # Разрешение экрана и залипание клавиш(для передвижения игрока в игре)
-W_WINDOW = 1280
-H_WINDOW = 720
+W_WINDOW = 640
+H_WINDOW = 512
 screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
 screen.set_alpha(None)  # Убирает лишнюю прозрачность. Буст +3 FPS
 pg.key.set_repeat(500, 10)
@@ -214,7 +214,8 @@ drop_images = {"meat": load_image('meat.png'),
                "meat_block": load_image('meat_block.png')}
 
 # Переменная отвечает за запуск секретного уровня
-psycho_level = 0
+psycho_level = 1
+
 # Переменная ограничитель для частиц
 # H_WINDOW // 8 = Размер клетки на экране
 screen_rect = (0, 0, H_WINDOW // 8 * 66,
@@ -345,6 +346,7 @@ class Level:
         self.txt_init()
 
     def txt_init(self):
+        # Текст выбора уровней
         self.choose_level_txt = start_menu_text.render(
             "CHOOSE YOUR LEVEL!", 0, (255, 255, 255))
 
@@ -913,6 +915,7 @@ class Win:
 # Выигрыш секретного уровня
 class DrownedChildren:
     def __init__(self):
+        screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
         self.running = True
 
     def txt_init(self):
@@ -1056,8 +1059,8 @@ class Game:
         quarter = random.randint(1, 4)
 
         if quarter == 1:  # I-я четверть
-            posx = random.randint(1, 15)
-            posy = random.randint(1, 15)
+            posx = random.randint(2, 15)
+            posy = random.randint(2, 15)
 
         if quarter == 2:  # II-я четверть
             posx = random.randint(16, 31)
@@ -1068,8 +1071,8 @@ class Game:
             posy = random.randint(32, 47)
 
         if quarter == 4:  # IV-я четверть
-            posx = random.randint(48, 62)
-            posy = random.randint(48, 62)
+            posx = random.randint(48, 63)
+            posy = random.randint(48, 63)
 
         # Создание игрока
         self.cell_size = H_WINDOW // 8
@@ -1210,6 +1213,12 @@ class Game:
         for sprite in drop_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
 
+        # Края карты
+        pg.draw.rect(screen, (0, 0, 0),
+                     (self.camera.camera.x, self.camera.camera.y,
+                      66 * H_WINDOW // 8, 66 * H_WINDOW // 8),
+                     H_WINDOW // 4 * self.step)
+
         # Коровы заднего плана
         for animal in animal_group:
             if animal in cow_list:
@@ -1225,12 +1234,6 @@ class Game:
         for entity in entities_group:
             if entity in entity_list:
                 screen.blit(entity.image, self.camera.apply(entity))
-
-        # Края карты
-        pg.draw.rect(screen, (0, 0, 0),
-                     (self.camera.camera.x, self.camera.camera.y,
-                      66 * H_WINDOW // 8, 66 * H_WINDOW // 8),
-                     H_WINDOW // 4 * self.step)
 
     def world_cutting(self):
         # Если таймер уничтожения границ больше, чем
@@ -1435,6 +1438,11 @@ class Game:
                 self.inventory.invtmp.remove(self.inventory.inv[0][index1])
                 self.inventory.inv[0][index1] = 0
 
+    def put_named_block(self, name):
+        self.world.render()
+        entities_group.update()
+        self.put_block(name)
+
     def create_object(self, y, xl, xr):
         for i in range(self.inventory.w):
             # Если в инвентаре есть мясной блок
@@ -1446,15 +1454,11 @@ class Game:
                     if self.player.mirrored:
                         if self.world.entities[y][xr] < 5:
                             self.world.entities[y][xr] = 5
-                            self.world.render()
-                            entities_group.update()
-                            self.put_block("meat_block")
+                            self.put_named_block("meat_block")
                     else:
                         if self.world.entities[y][xl] < 5:
                             self.world.entities[y][xl] = 5
-                            self.world.render()
-                            entities_group.update()
-                            self.put_block("meat_block")
+                            self.put_named_block("meat_block")
 
             # Если в инвентаре есть золотой меч
             # И курсор находится на его позиции
@@ -1465,15 +1469,11 @@ class Game:
                     if self.player.mirrored:
                         if self.world.entities[y][xr] < 5:
                             self.world.entities[y][xr] = 6
-                            self.world.render()
-                            entities_group.update()
-                            self.put_block("gold_sword")
+                            self.put_named_block("gold_sword")
                     else:
                         if self.world.entities[y][xl] < 5:
                             self.world.entities[y][xl] = 6
-                            self.world.render()
-                            entities_group.update()
-                            self.put_block("gold_sword")
+                            self.put_named_block("gold_sword")
 
             # Если в инвентаре есть серебрянный меч
             # И курсор находится на его позиции
@@ -1484,15 +1484,11 @@ class Game:
                     if self.player.mirrored:
                         if self.world.entities[y][xr] < 5:
                             self.world.entities[y][xr] = 7
-                            self.world.render()
-                            entities_group.update()
-                            self.put_block("silver_sword")
+                            self.put_named_block("silver_sword")
                     else:
                         if self.world.entities[y][xl] < 5:
                             self.world.entities[y][xl] = 7
-                            self.world.render()
-                            entities_group.update()
-                            self.put_block("silver_sword")
+                            self.put_named_block("silver_sword")
 
     def destroy_object(self, x, y, xl, xr, yu, yd):
         ifdestroy = False  # Флаг разрушенности блоков
@@ -1654,6 +1650,7 @@ class Game:
         quit_rect = quit_txt.get_rect().move(W_WINDOW * 0.09375,
                                              H_WINDOW * 0.3125)
         while self.running:
+            # Размер карты
             self.mapwidth = 66 * H_WINDOW // 8
             # Положение игрока внутри матрицы мира
             x = int((self.player.rect.x + self.halfsize) / self.mapwidth * 66)
@@ -2417,8 +2414,6 @@ class InventoryTile(pg.sprite.Sprite):
         super().__init__(inventory_group)
         self.image = inventory_images[types]    # Спрайт из словаря
         self.x = x
-
-    def update(self):
         self.cell_size = int(H_WINDOW * 0.140625)  # Размер ячейки
         # Изменяются размеры спрайта ячейки
         self.image = pg.transform.scale(self.image,
