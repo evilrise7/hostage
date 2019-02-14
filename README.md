@@ -88,3 +88,5 @@ EXPERT - 16 клеток в минуту
 ```
 ## Автор игры
 * **Nurmakhan Bakhtiyar** - *ULTRABAKHA* - [evil_rise7](https://github.com/evilrise7)
+## Видео
+https://youtu.be/GbB9JiWNXcE
