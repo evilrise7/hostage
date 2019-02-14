@@ -214,7 +214,8 @@ drop_images = {"meat": load_image('meat.png'),
                "meat_block": load_image('meat_block.png')}
 
 # Переменная отвечает за запуск секретного уровня
-psycho_level = 1
+# 0 - выкл, 1 - вкл
+psycho_level = 0
 
 # Переменная ограничитель для частиц
 # H_WINDOW // 8 = Размер клетки на экране
