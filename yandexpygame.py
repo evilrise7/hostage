@@ -226,6 +226,10 @@ screen_rect = (0, 0, H_WINDOW // 8 * 66,
 # Класс меню
 class Menu:
     def __init__(self):
+        global W_WINDOW, H_WINDOW, screen
+        # При выходе из разделов игровых миров, чтобы окно появлялось
+        # с рамкой
+        screen = pg.display.set_mode((W_WINDOW, H_WINDOW), pg.RESIZABLE)
         self.running = True
         pg.mouse.set_visible(True)  # Сделать мышь видимой
         # Начать игру, Результаты, Настройки и Выход
@@ -1177,12 +1181,6 @@ class Game:
         # Животные
         for animal in animal_group:
             if animal not in cow_list:
-                # Отображаю жизни животных
-                pos = self.camera.apply(animal)
-                if animal.hp:
-                    screen.blit(menu_text.render(
-                        str(animal.hp) + "HP", 0, (255, 255, 255)),
-                        (pos[0], pos[1] - self.cell // 1.8))
                 screen.blit(animal.image, self.camera.apply(animal))
 
         # Игрок
@@ -1210,6 +1208,16 @@ class Game:
         for sprite in particle_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
 
+        # Коровы заднего плана
+        for animal in animal_group:
+            if animal in cow_list:
+                screen.blit(animal.image, self.camera.apply(animal))
+
+        # Природные объекты переднего плана
+        for entity in entities_group:
+            if entity in entity_list:
+                screen.blit(entity.image, self.camera.apply(entity))
+
         # Выпавшие вещи
         for sprite in drop_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
@@ -1220,21 +1228,13 @@ class Game:
                       66 * H_WINDOW // 8, 66 * H_WINDOW // 8),
                      H_WINDOW // 4 * self.step)
 
-        # Коровы заднего плана
         for animal in animal_group:
-            if animal in cow_list:
-                # Отображаю жизни животных
-                pos = self.camera.apply(animal)
-                if animal.hp:
-                    screen.blit(menu_text.render(
-                        str(animal.hp) + "HP", 0, (255, 255, 255)),
-                        (pos[0], pos[1] - self.cell // 1.8))
-                screen.blit(animal.image, self.camera.apply(animal))
-
-        # Природные объекты переднего плана
-        for entity in entities_group:
-            if entity in entity_list:
-                screen.blit(entity.image, self.camera.apply(entity))
+            # Отображаю жизни животных
+            pos = self.camera.apply(animal)
+            if animal.hp:
+                screen.blit(menu_text.render(
+                    str(animal.hp) + "HP", 0, (255, 255, 255)),
+                    (pos[0], pos[1] - self.cell // 1.8))
 
     def world_cutting(self):
         # Если таймер уничтожения границ больше, чем
