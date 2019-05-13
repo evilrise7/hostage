@@ -1,4 +1,4 @@
-# Надо их по иерхархии типа выстраивать, по комментариям Алексея.
+# Библиотеки
 import os
 import sys
 import random
@@ -38,8 +38,13 @@ drop_group = pg.sprite.Group()
 animal_group = pg.sprite.Group()
 particle_group = pg.sprite.Group()
 
+
 # Звук клика в меню
 click_sound = pg.mixer.Sound("sounds/walk.wav")
+init_score = ["0", "1", "2", "3", "4", "5",
+              "6", "7", "8", "9", ":"]
+new_score = ["Z", "#", "@", "B", "F", "T",
+             "N", "Q", "X", "W", "/"]
 
 # Звук подбора вещей в игре
 pick_up_sound = pg.mixer.Sound("sounds/pickup.wav")
@@ -113,33 +118,15 @@ def clear_tiles():
 
 # Кордировщик для честности
 def coder(score_output):
-    score_output = score_output.replace("0", "Z")
-    score_output = score_output.replace("1", "#")
-    score_output = score_output.replace("2", "@")
-    score_output = score_output.replace("3", "B")
-    score_output = score_output.replace("4", "F")
-    score_output = score_output.replace("5", "T")
-    score_output = score_output.replace("6", "N")
-    score_output = score_output.replace("7", "Q")
-    score_output = score_output.replace("8", "X")
-    score_output = score_output.replace("9", "W")
-    score_output = score_output.replace(":", "/")
+    for i in range(11):
+        score_output = score_output.replace(init_score[i], new_score[i])
     return score_output
 
 
 # Перекордировщик для честности
 def decoder(score_input):
-    score_input = score_input.replace("Z", "0")
-    score_input = score_input.replace("#", "1")
-    score_input = score_input.replace("@", "2")
-    score_input = score_input.replace("B", "3")
-    score_input = score_input.replace("F", "4")
-    score_input = score_input.replace("T", "5")
-    score_input = score_input.replace("N", "6")
-    score_input = score_input.replace("Q", "7")
-    score_input = score_input.replace("X", "8")
-    score_input = score_input.replace("W", "9")
-    score_input = score_input.replace("/", ":")
+    for i in range(11):
+        score_input = score_input.replace(new_score[i], init_score[i])
     return score_input
 
 
