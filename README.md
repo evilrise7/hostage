@@ -95,5 +95,3 @@ HARDCORE - 16 клеток в минуту
 PEP8
 Расширение окна
 ```
-## Видео
-https://youtu.be/GbB9JiWNXcE
