@@ -6,8 +6,8 @@
 [RU] Вы - беженец из подземелья. Ваша цель, как можно быстрее найти все необходимые предметы для постройки тотема, чтобы противостоять темным силам, направляющиеся за вами.
 ## How to run?
 1. Download project by following the steps: Clone or Download -> Download ZIP
-2. Open dowloaded zip file, get file "yandexpygameproject.py", and open it by any IDE, like 
-3. Наслаждайтесь игрой
+2. Open dowloaded zip file, get file "yandexpygameproject.py", and open it by any IDE, like https://thonny.org/
+3. Enjoy
 ## Как Запустить?
 1. Скачайте проект по кнопке Clone or Download -> Download ZIP
 2. Откройте полученный архив и запустите yandexpygameproject.py через любой IDE или CMD
