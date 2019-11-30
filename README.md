@@ -1,4 +1,5 @@
 # Hell Obtained Sensible Tiny And Geniusly Emmy
+![](yandexa2eng.png)
 ![](YANDEXA2BAKHA.png)
 ## Description
 [EN] You are a refugee from the dungeon. Your goal is to find all the necessary items for building the totem as quickly as possible in order to resist the dark forces that are heading for you.
